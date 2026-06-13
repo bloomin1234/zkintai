@@ -39,7 +39,7 @@ header{position:sticky;top:0;z-index:40;background:var(--paper);border-bottom:1p
 .h-sub{font-size:11px;color:var(--mut);margin-top:-2px}
 .h-right{margin-left:auto;font-size:12px;color:var(--mut)}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--paper);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom)}
+  display:grid;grid-template-columns:repeat(8,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;font-size:10px;color:var(--mut);font-weight:500}
 nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:miter}
 nav button.on{color:var(--green);font-weight:700}
@@ -116,10 +116,11 @@ select.tbl-in{width:auto;min-width:88px}
 .modal-bg.on{display:flex}
 @media(min-width:680px){.modal-bg.on{align-items:center}}
 .modal{background:var(--paper);width:100%;max-width:680px;max-height:92dvh;overflow:auto;border-radius:var(--r);
-  padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+  padding:18px 18px 0}
 .modal h3{font-size:15px;display:flex;align-items:center;margin-bottom:14px}
 .modal h3 .x{margin-left:auto;font-size:22px;line-height:1;color:var(--mut);padding:2px 8px}
-.modal .foot{display:flex;gap:8px;margin-top:16px}
+.modal .foot{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:var(--paper);
+  padding:12px 0 calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);z-index:3;flex-wrap:wrap}
 .modal .foot .sp{flex:1}
 
 /* ---------- 打刻（基幹画面: 黒地キオスク） ---------- */
@@ -205,6 +206,44 @@ body.kiosk-mode .kiosk-hide{display:none!important}
 #pay-grid .grp{border-left:2px solid var(--line)}
 /* ---- 取込プレビュー ---- */
 #imp-tbl td,#imp-tbl th{padding:5px 8px;font-size:12px}
+
+/* ---- 端末がダークモードでも常に白基調で表示（強制ライト） ---- */
+html,body{background:#FFFFFF !important;color:var(--ink)}
+main,nav,header,.view{background:#FFFFFF}
+h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
+
+/* ---- モバイル最適化（横はみ出し・ボトムシート崩れ対策） ---- */
+.tbl-wrap{-webkit-overflow-scrolling:touch}
+@media(max-width:560px){
+  .grid2{grid-template-columns:1fr}            /* 2列フォームを1列に＝ラベル段差の崩れを解消 */
+  .grid3{grid-template-columns:1fr 1fr}
+  main{padding:14px 12px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom))}
+  th,td{padding:7px 8px;font-size:12px}        /* 表を詰めて1画面に収まりやすく */
+  table{font-size:12px}
+  .tag{font-size:10px;padding:1px 6px}
+  nav button{font-size:9px;gap:1px}
+  h2{font-size:17px}
+}
+@media(max-width:380px){
+  th,td{padding:6px 6px;font-size:11.5px}
+  nav button{font-size:8.5px}
+  nav button svg{width:18px;height:18px}
+}
+
+/* ---- 給与計算設定ウィザード ---- */
+.wiz-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.wiz-pct{font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
+.wiz-bar{height:8px;background:var(--chip);border-radius:var(--r);overflow:hidden}
+.wiz-bar-fill{height:100%;background:var(--green);border-radius:var(--r);transition:width .3s ease}
+.wiz-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.wiz-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--mut);cursor:pointer}
+.wiz-pill .wiz-pill-n{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 3px;border-radius:var(--r);background:var(--chip);color:var(--mut);font-size:11px;font-weight:700}
+.wiz-pill.on{border-color:var(--green);color:var(--green)}
+.wiz-pill.on .wiz-pill-n{background:var(--green);color:#fff}
+.wiz-pill.done{color:var(--ink);border-color:var(--green)}
+.wiz-pill.done .wiz-pill-n{background:var(--green);color:#fff}
+.wiz-nav{display:flex;align-items:center;gap:10px;position:sticky;bottom:calc(var(--nav-h) + 8px)}
+@media(min-width:880px){.wiz-nav{bottom:8px}}
 </style>
 </head>
 <body>
@@ -223,7 +262,9 @@ body.kiosk-mode .kiosk-hide{display:none!important}
   <button data-v="emp"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5M16 4.5a3.5 3.5 0 010 7M21 20c0-2.8-1.7-4.6-4-5.2"/></svg>従業員</button>
   <button data-v="att"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>勤怠</button>
   <button data-v="pay"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 9.5L12 13l3.5-3.5M12 13v5M9.5 15h5"/></svg>給与</button>
-  <button data-v="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>設定</button>
+  <button data-v="plan"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12"/><path d="M3 10h18M7 14h4"/></svg>契約</button>
+  <button data-v="calc"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.3"/><circle cx="17" cy="17" r="2.3"/><path d="M6 18L18 6"/></svg>計算設定</button>
+  <button data-v="data"><svg viewBox="0 0 24 24"><path d="M5 6c0-1.4 3.1-2.5 7-2.5s7 1.1 7 2.5-3.1 2.5-7 2.5S5 7.4 5 6z"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg>データ</button>
 </nav>
 
 <main>
@@ -328,16 +369,29 @@ body.kiosk-mode .kiosk-hide{display:none!important}
       <span class="sp"></span>
       <button class="btn ghost sm" id="btn-pay-csv">CSV出力</button>
       <button class="btn ghost sm" id="btn-pay-print">全明細印刷</button>
-      <button class="btn ghost sm" id="btn-pay-mailall">一括メール送信</button>
+      <button class="btn ghost sm" id="btn-pay-mailall">全員へメール送信</button>
     </div>
     <div id="pay-alerts"></div>
     <div id="pay-body"><div class="empty">対象月を選んで「一括計算」を押してください。<br>勤怠データと従業員マスタから自動計算します。</div></div>
+    <div id="pay-mailcfg"></div>
   </section>
 
-  <!-- ============ 設定 ============ -->
-  <section class="view" id="v-set">
-    <h2><span class="bar"></span>設定</h2>
-    <div id="set-body"></div>
+  <!-- ============ 契約プラン ============ -->
+  <section class="view" id="v-plan">
+    <h2><span class="bar"></span>契約プラン</h2>
+    <div id="plan-body"></div>
+  </section>
+
+  <!-- ============ 給与計算設定 ============ -->
+  <section class="view" id="v-calc">
+    <h2><span class="bar"></span>給与計算設定</h2>
+    <div id="calc-body"></div>
+  </section>
+
+  <!-- ============ データ管理 ============ -->
+  <section class="view" id="v-data">
+    <h2><span class="bar"></span>データ管理</h2>
+    <div id="data-body"></div>
   </section>
 </main>
 
@@ -446,6 +500,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
 /* ---------- 既定値（令和8年分・令和8年度の公式値） ---------- */
 const DEFAULT_SETTINGS = {
+  sampleLoaded: false,             // サンプルデータ投入中フラグ（ホームの本番リセット表示に使用）
+  calcDone: { rules: false, period: false, rates: false, kou: false, otsu: false },  // 給与計算設定ウィザードの完了状態
   company: { name: '', zip: '', address: '', tel: '', email: '', payerNo: '' },
   payroll: {
     closingDay: 31,          // 締め日（31=月末）
@@ -502,7 +558,7 @@ const DEFAULT_SETTINGS = {
     otsuTable: [],           // 乙欄 88,000円以上: [{upTo, amount}] を設定画面で登録
   },
   gasUrl: '',                // 給与明細一括メール送信用 GAS WebアプリURL
-  cloud: { url: 'https://umoabfgkerhcmpogvybt.supabase.co', anonKey: 'sb_publishable_b6kxInzyU_9i4ZZMQYRZKA_Hl1Zzi50', deviceId: '' },   // Supabase接続（複数端末同期）
+  cloud: { url: 'https://umoabfgkerhcmpogvybt.supabase.co', anonKey: 'sb_publishable_b6kxlnzyU_9i4ZZMQYRZKA_Hl1Zzi50', deviceId: '' },   // Supabase接続（埋め込み済み・SaaS共通）
   taxTableLabel: '令和8年分（2026年）',
   rateLabel: '令和8年度・協会けんぽ東京',
 };
@@ -789,7 +845,10 @@ function deepMergeSettings(v) {
     if (typeof base[k] === 'object' && base[k] !== null && !Array.isArray(base[k])) Object.assign(base[k], v[k]);
     else base[k] = v[k];
   }
+  if (!base.cloud.url) base.cloud.url = DEFAULT_SETTINGS.cloud.url;          // SaaS: 接続先は埋め込み既定を採用
+  if (!base.cloud.anonKey) base.cloud.anonKey = DEFAULT_SETTINGS.cloud.anonKey;
   if (Array.isArray(v.rateHistory)) base.rateHistory = v.rateHistory;   // 適用期間付き料率セット
+  if (v.cloudSync) base.cloudSync = v.cloudSync;                        // クラウドのログイン・契約情報
   return base;
 }
 /* ---------- 料率・税表の適用期間（rateHistory） ----------
@@ -884,6 +943,9 @@ renderers.home = async function () {
 
   // アラート
   const alerts = [];
+  if (S.sampleLoaded) {
+    alerts.push(`<div class="alert"><b>サンプルデータで試用中です。</b>表示中の従業員・勤怠・給与はお試し用です。本番運用を始めるときは、下のボタンでサンプルを消去してまっさらな状態に戻してください。<div style="margin-top:8px"><button class="btn ghost sm" id="btn-home-reset">サンプルを消して本番用にリセット</button></div></div>`);
+  }
   const over45 = Object.entries(otByEmp).filter(([, m]) => m > 45 * 60);
   for (const [id, m] of over45) {
     const e = empById(Number(id));
@@ -1515,20 +1577,38 @@ renderers.pay = async function () {
   const ym = $('#pay-month').value || thisYM();
   PAY = await dbByIndex('payroll', 'ym', IDBKeyRange.only(ym));
   renderPayList(ym);
+  const mc = $('#pay-mailcfg');
+  if (mc) mc.innerHTML = `<details class="acc" style="margin-top:14px"><summary>メール一括送信の設定（GAS・初回のみ）</summary><div class="inner">
+    <p class="note" style="margin-bottom:8px">給与明細を在籍者へ一括メール送信するには、無料のGoogle Apps Script（GAS）を一度だけ設定します（サーバー不要）。未設定でも、各明細の画面から1通ずつメール作成できます。退職者は送信対象から自動で除外されます。</p>
+    <div class="field"><label>GAS WebアプリURL</label><input id="pay-gas-url" value="${esc(S.gasUrl || '')}" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <details class="acc"><summary>GASサンプルコード（コピーして貼り付け）</summary><div class="inner">
+      <code class="gas">${esc(GAS_SAMPLE)}</code>
+      <button class="btn ghost sm" id="btn-gas-copy" style="margin-top:8px">コードをコピー</button>
+    </div></details>
+  </div></details>`;
 };
+$('#v-pay').addEventListener('change', e => {
+  if (e.target.id === 'pay-gas-url') { S.gasUrl = e.target.value.trim(); saveSettings(); toast('メール送信先（GAS）を保存しました。'); }
+});
+$('#v-pay').addEventListener('click', async e => {
+  if (e.target.id === 'btn-gas-copy') {
+    try { await navigator.clipboard.writeText(GAS_SAMPLE); toast('コピーしました。'); }
+    catch { toast('コピーできませんでした。長押しで選択してください。'); }
+  }
+});
 $('#pay-month').addEventListener('change', () => renderers.pay());
 
-$('#btn-pay-calc').addEventListener('click', async () => {
+async function payrollCalcAll(ym) {
   if (window.cloudCfg && window.cloudCfg() && !KIOSK) {   // 受付端末の最新打刻を先に取込
     try { await window.syncAll(true); }
     catch (e) { if (!/未ログイン|未設定/.test(e.message)) toast('クラウド同期に失敗（手元のデータで計算します）：' + e.message); }
   }
-  const ym = $('#pay-month').value || thisYM();
   const SS = settingsFor(ym);                       // その月に有効な料率・税表セット
+  PAY = await dbByIndex('payroll', 'ym', IDBKeyRange.only(ym));
   const all = await attOfMonth(ym);
   const byEmp = groupBy(all, 'empId');
   let calced = 0, locked = 0;
-  for (const e of activeEmps()) {
+  for (const e of activeEmps()) {                   // 退職者は対象外（在籍フラグで制御）
     const old = PAY.find(p => p.empId === e.id);
     if (old && old.status === '確定') { locked++; continue; }
     const att = aggregateMonth(byEmp[e.id] || [], SS);
@@ -1538,6 +1618,11 @@ $('#btn-pay-calc').addEventListener('click', async () => {
     calced++;
   }
   PAY = await dbByIndex('payroll', 'ym', IDBKeyRange.only(ym));
+  return { calced, locked };
+}
+$('#btn-pay-calc').addEventListener('click', async () => {
+  const ym = $('#pay-month').value || thisYM();
+  const { calced, locked } = await payrollCalcAll(ym);
   renderPayList(ym);
   toast(`計算完了：${calced}名${locked ? `（確定済 ${locked}名はスキップ）` : ''}`);
 });
@@ -1803,13 +1888,17 @@ const slipPdfItem = (e, p) => ({ to: e.email, subject: mailSubject(p), body: mai
   html: slipDocHTML(e, p), filename: `給与明細_${p.ym}_${e.name}.pdf` });
 
 $('#btn-pay-mailall').addEventListener('click', async () => {
-  if (!PAY.length) { toast('先に「一括計算」を実行してください。'); return; }
-  if (!S.gasUrl) { toast('設定画面で「一括メール送信URL（GAS）」を登録してください。'); return; }
+  const ym = $('#pay-month').value || thisYM();
+  if (!S.gasUrl) { toast('下の「メール一括送信の設定」でGASのURLを登録してください（初回のみ）。'); return; }
+  if (!PAY.length) {                                  // まだ計算していなければ自動で計算
+    toast('給与を計算しています…');
+    await payrollCalcAll(ym); renderPayList(ym);
+  }
   const items = PAY.map(p => ({ p, e: empById(p.empId) }))
-    .filter(x => x.e && x.e.email)
+    .filter(x => x.e && x.e.email && x.e.status !== '退職')   // 退職者・メール未登録は除外
     .map(({ p, e }) => slipPdfItem(e, p));
-  if (!items.length) { toast('メールアドレス登録済みの対象者がいません。'); return; }
-  if (!confirm(`${items.length}名に給与明細（PDF添付）を送信します。よろしいですか？`)) return;
+  if (!items.length) { toast('メールアドレス登録済みの在籍者がいません（従業員画面でメールを登録してください）。'); return; }
+  if (!confirm(`${ymJP(ym)}分の給与明細を、在籍者 ${items.length}名へPDF添付でメール送信します。\n（退職者は対象外です）\nよろしいですか？`)) return;
   try {
     await gasPost({ items });
     toast(`${items.length}件の送信リクエストを実行しました（結果はGASの実行ログ・受信箱でご確認ください）。`);
@@ -1906,12 +1995,105 @@ const GAS_SAMPLE = `function doPost(e) {
 
 const CSx = () => (S.cloudSync || {});            // アカウント表示用
 let RS_SEL = null;                                   // 設定画面で選択中の適用開始月
+let CALC_STEP = 0;                                   // 給与計算設定ウィザードの現在ステップ(0〜4)
+const CALC_STEPS = [
+  { key: 'rules',  title: '給与規定',                 short: '給与規定' },
+  { key: 'period', title: '料率・税表の適用期間',     short: '適用期間' },
+  { key: 'rates',  title: '社会保険・雇用保険の料率', short: '保険料率' },
+  { key: 'kou',    title: '源泉所得税・甲欄',         short: '甲欄' },
+  { key: 'otsu',   title: '源泉所得税・乙欄',         short: '乙欄' },
+];
 function rsRangeLabel(r) {
   const i = S.rateHistory.indexOf(r), nx = S.rateHistory[i + 1];
   return ymJP(r.effectiveFrom) + ' 〜 ' + (nx ? ymJP(prevYM(nx.effectiveFrom)) : '現在以降');
 }
-renderers.set = function () {
-  if (!RS_SEL || !S.rateHistory.some(r => r.effectiveFrom === RS_SEL))
+/* ============================================================
+   契約プラン（アカウント・課金）　※設定とは別画面
+   ============================================================ */
+const PLAN_DESC = {
+  p10: '小規模チーム向け。全機能が使えます。',
+  p50: '成長中の事業所に。いちばん人気のプランです。',
+  p100: '複数拠点・多店舗の運用に最適。',
+  pmax: '大規模組織向け。導入サポート付き。',
+};
+const PLAN_FALLBACK = [
+  { plan_code: 'p10', name: 'スターター', max_emp: 10, price: 1000 },
+  { plan_code: 'p50', name: 'スタンダード', max_emp: 50, price: 2000 },
+  { plan_code: 'p100', name: 'ビジネス', max_emp: 100, price: 5000 },
+  { plan_code: 'pmax', name: 'エンタープライズ', max_emp: 0, price: 10000 },
+];
+function planTableHTML(currentCode) {
+  const plans = (CSx().plans && CSx().plans.length ? CSx().plans : PLAN_FALLBACK)
+    .slice().sort((a, b) => a.price - b.price);
+  const rows = plans.map(p => {
+    const target = p.max_emp > 0 ? `〜${p.max_emp}名` : '101名以上';
+    const here = p.plan_code === currentCode;
+    return `<tr${here ? ' style="background:var(--green-bg)"' : ''}>
+      <td><b>${esc(p.name)}</b>${here ? ' <span class="tag g">現在</span>' : ''}</td>
+      <td class="num">${target}</td>
+      <td class="num">¥${fmtNum(p.price)}</td>
+      <td class="note">${esc(PLAN_DESC[p.plan_code] || '')}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="tbl-wrap"><table>
+    <tr><th>プラン</th><th style="width:84px">対象人数</th><th style="width:104px">月額(税別)</th><th>特長</th></tr>
+    ${rows}
+  </table></div>
+  <p class="note">料金は在職の従業員数で<b>毎月自動判定</b>されます。すべてのプランで全機能・受付端末数は無制限、30日間の無料トライアル付き。お支払いはクレジットカード（Stripe）。</p>`;
+}
+renderers.plan = function () {
+  $('#plan-body').innerHTML = CSx().companyId ? `
+  <div class="card">
+    <h3>ご契約状況</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th style="width:140px">会社名</th><td>${esc(CSx().companyName || '')}</td>
+          <th style="width:140px">ログイン</th><td>${esc(CSx().loginEmail || '')}</td></tr>
+      <tr><th>現在のプラン</th><td><b>${esc(CSx().planName || '判定前（同期すると確定）')}</b>${CSx().planPrice ? `　月額 ${fmtNum(CSx().planPrice)}円（税別）` : ''}<br><span class="note">在職 ${typeof activeCount === 'function' ? activeCount() : '-'} 名</span></td>
+          <th>お支払い状況</th><td>${CSx().billingStatus === 'active' ? '<span class="tag g">有効（カード決済済み）</span>' : CSx().billingStatus === 'trial' ? `<span class="tag o">無料トライアル中</span><span class="note">　${esc(CSx().trialEnds || '')} まで</span>` : `<span class="tag r">${esc(CSx().billingStatus || '未確認')}</span>`}</td></tr>
+    </table></div>
+    <div class="toolbar">
+      <button class="btn pri sm" id="btn-cloud-pay">クレジットカードで支払う（Stripe）</button>
+      <button class="btn ghost sm" id="btn-cloud-sync">今すぐ同期</button>
+      <button class="btn ghost sm" id="btn-cloud-kiosk">受付端末セットアップURLを発行</button>
+      <span class="sp"></span>
+      <button class="btn ghost sm" id="btn-cloud-logout">ログアウト</button>
+    </div>
+    <p class="note" style="margin-top:6px">最終同期：${CSx().lastAt ? new Date(CSx().lastAt).toLocaleString('ja-JP') : 'まだ'}　／　ログイン中は5分ごと＋給与の一括計算前に自動同期。決済は Stripe の安全なページで行われ、カード番号が当サービスに保存されることはありません。</p>
+  </div>
+  <div class="card">
+    <h3>料金プラン</h3>
+    ${planTableHTML(CSx().plan)}
+  </div>
+  ` : `
+  <div class="card">
+    <h3>新規登録 / ログイン <span class="tag g">30日間無料</span></h3>
+    <p class="note" style="margin-bottom:10px">はじめての方は<b>新規登録（30日間無料・カード登録不要）</b>、登録済みの方はログインしてください。データはクラウド（PostgreSQL）に自社専用領域として保存され、他社からは一切見えません（DB側の行レベルセキュリティで強制）。</p>
+    <div class="grid2">
+      <div class="field"><label>会社名（新規登録のとき）</label><input id="cl-coname" placeholder="例：株式会社サンプル"></div>
+      <div class="field"><label>メールアドレス</label><input id="cl-email" value="${esc((S.cloudSync && S.cloudSync.loginEmail) || '')}" autocomplete="username"></div>
+      <div class="field"><label>パスワード（8文字以上）</label><input id="cl-pass" type="password" autocomplete="current-password"></div>
+    </div>
+    <div class="toolbar" style="margin-top:4px">
+      <button class="btn pri sm" id="btn-cloud-signup">新規登録（30日無料で開始）</button>
+      <button class="btn ghost sm" id="btn-cloud-login">ログイン</button>
+    </div>
+    <details class="acc" style="margin-top:8px"><summary>接続先の変更（通常は不要）</summary><div class="inner">
+      <div class="grid2">
+        <div class="field"><label>Project URL</label><input data-p="cloud.url" value="${esc(S.cloud.url)}" placeholder="https://xxxx.supabase.co"></div>
+        <div class="field"><label>anon public キー</label><input data-p="cloud.anonKey" value="${esc(S.cloud.anonKey)}" placeholder="eyJhbGciOi…"></div>
+      </div>
+      <p class="note">通常は設定済みです。運営から案内された値があるときだけ変更してください。</p>
+    </div></details>
+  </div>
+  <div class="card">
+    <h3>料金プラン</h3>
+    ${planTableHTML(null)}
+  </div>
+  `;
+};
+
+renderers.calc = function () {
+    if (!RS_SEL || !S.rateHistory.some(r => r.effectiveFrom === RS_SEL))
     RS_SEL = S.rateHistory[S.rateHistory.length - 1].effectiveFrom;
   const cur = S.rateHistory.find(r => r.effectiveFrom === RS_SEL);
   const t = cur.taxTables;
@@ -1919,18 +2101,9 @@ renderers.set = function () {
   const rsIn = (p, v, w = 108, step = 'any') => `<input type="number" step="${step}" data-rs="${p}" value="${v}" style="width:${w}px">`;
   const tblRows = (rows, cols) => rows.map(r => '<tr>' + cols.map(c =>
     `<td><input type="number" step="any" data-col="${c}" value="${r[c] === null || r[c] === undefined ? '' : r[c]}" placeholder="${c === 'upTo' ? '上限なし' : ''}"></td>`).join('') + '</tr>').join('');
-
-  $('#set-body').innerHTML = `
-  <div class="card">
-    <h3>会社情報</h3>
-    <div class="grid2">
-      <div class="field"><label>会社名（明細・QRカードに表示）</label><input data-p="company.name" value="${esc(S.company.name)}"></div>
-      <div class="field"><label>電話番号</label><input data-p="company.tel" value="${esc(S.company.tel)}"></div>
-      <div class="field"><label>住所</label><input data-p="company.address" value="${esc(S.company.address)}"></div>
-      <div class="field"><label>代表メール</label><input data-p="company.email" value="${esc(S.company.email)}"></div>
-    </div>
-  </div>
-
+  
+  const cards = [
+    `
   <div class="card">
     <h3>給与規定</h3>
     <div class="grid3">
@@ -1942,7 +2115,8 @@ renderers.set = function () {
       <div class="field"><label>支給項目の円未満端数</label><select data-p="payroll.itemRound"><option value="round" ${S.payroll.itemRound === 'round' ? 'selected' : ''}>四捨五入</option><option value="floor" ${S.payroll.itemRound === 'floor' ? 'selected' : ''}>切捨て</option><option value="ceil" ${S.payroll.itemRound === 'ceil' ? 'selected' : ''}>切上げ</option></select></div>
     </div>
   </div>
-
+  `,
+    `
   <div class="card">
     <h3>料率・税表の適用期間 <span class="tag g">月別に自動適用</span></h3>
     <p class="note" style="margin-bottom:10px">給与は「<b>その月に有効なセット</b>」で自動計算します。改定があったら、新しい開始月のセットを追加して数値を直すだけ。<b>過去の月の計算には影響しません</b>（例：5月から改定 → 4月分はいつ再計算しても4月のセットを使用）。</p>
@@ -1957,7 +2131,8 @@ renderers.set = function () {
     <p class="note" style="margin-top:4px;color:var(--ochre)"><b>ご注意：</b>「最新の料率・税表を取得」で追加される内容は運営が公式情報をもとに作成・配信するものですが、<b>適用前に必ず国税庁・協会けんぽ・日本年金機構の公式発表と照合し、貴社の責任でご確認ください</b>。取得しても過去の月の給与計算には影響しません（適用期間方式）。</p>
     <p class="note">下の「料率・割増率」「源泉所得税」は、選択中セット <b>${ymJP(cur.effectiveFrom)}〜</b> の内容です。セットを切り替える前に「設定を保存」してください。</p>
   </div>
-
+  `,
+    `
   <div class="card">
     <h3>社会保険・雇用保険の料率 <span class="tag g">${esc(cur.rateLabel)}</span> <span class="tag k">${ymJP(cur.effectiveFrom)}〜</span></h3>
     <p class="note" style="margin-bottom:10px">本人負担＝労使折半・五捨五超入。来年度の改定は、このセットを書き換えるのではなく「適用期間」で新しい開始月のセットを追加してから変更してください。</p>
@@ -1978,7 +2153,8 @@ renderers.set = function () {
       <div class="field"><label>法定休日</label>${rsIn('premiums.holiday', cur.premiums.holiday)}</div>
     </div>
   </div>
-
+  `,
+    `
   <div class="card">
     <h3>源泉所得税・甲欄 <span class="tag g">${esc(cur.taxTableLabel)}</span> <span class="tag k">${ymJP(cur.effectiveFrom)}〜</span></h3>
     <p class="note" style="margin-bottom:10px">国税庁「月額表（甲欄）を電子計算機で計算する特例」の係数です。改正時は新セットを追加してから各欄を書き換えてください。空欄の上限＝「上限なし（最終行）」です。</p>
@@ -2001,7 +2177,8 @@ renderers.set = function () {
     <div class="field" style="margin-top:8px"><label>税表ラベル（表示用）</label><input data-rs="taxTableLabel" value="${esc(cur.taxTableLabel)}"></div>
     <button class="btn ghost sm" id="btn-tax-reset">このセットを令和8年の既定値に戻す</button>
   </div>
-
+  `,
+    `
   <div class="card">
     <h3>源泉所得税・乙欄 <span class="tag k">${ymJP(cur.effectiveFrom)}〜</span></h3>
     <p class="note" style="margin-bottom:10px">${fmtNum(t.otsuThreshold)}円未満は「給与×${t.otsuLowRate}%」で自動計算します。${fmtNum(t.otsuThreshold)}円以上は告示の算式がないため、下の表（国税庁の月額表・乙欄）を登録するか、明細画面で手入力してください。</p>
@@ -2017,53 +2194,39 @@ renderers.set = function () {
     </table>
     <button class="btn ghost sm" id="btn-otsu-add" style="margin-top:6px">＋ 行を追加</button>
   </div>
-
+  `
+  ];
+  CALC_STEP = Math.max(0, Math.min(CALC_STEPS.length - 1, CALC_STEP));
+  const done = S.calcDone || {};
+  const doneCount = CALC_STEPS.filter(s => done[s.key]).length;
+  const pct = Math.round(doneCount / CALC_STEPS.length * 100);
+  const pills = CALC_STEPS.map((s, i) => `<button class="wiz-pill${i === CALC_STEP ? ' on' : ''}${done[s.key] ? ' done' : ''}" data-step="${i}"><span class="wiz-pill-n">${done[s.key] ? '✓' : (i + 1)}</span>${s.short}</button>`).join('');
+  $('#calc-body').innerHTML = `
   <div class="card">
-    <h3>アカウント・ご利用プラン <span class="tag g">クラウド同期つき</span></h3>
-    ${CSx().companyId ? `
-      <div class="tbl-wrap"><table>
-        <tr><th style="width:140px">会社名</th><td>${esc(CSx().companyName || '')}</td>
-            <th style="width:140px">ログイン</th><td>${esc(CSx().loginEmail || '')}</td></tr>
-        <tr><th>ご利用プラン</th><td><b>${esc(CSx().planName || '判定前（同期すると確定）')}</b>${CSx().planPrice ? `　月額 ${fmtNum(CSx().planPrice)}円（税別）` : ''}<br><span class="note">在職 ${typeof activeCount === 'function' ? activeCount() : '-'} 名 → 従業員数で自動判定されます</span></td>
-            <th>お支払い状況</th><td>${CSx().billingStatus === 'active' ? '<span class="tag g">有効（カード決済済み）</span>' : CSx().billingStatus === 'trial' ? `<span class="tag o">無料トライアル中</span><span class="note">　${esc(CSx().trialEnds || '')} まで</span>` : `<span class="tag r">${esc(CSx().billingStatus || '未確認')}</span>`}</td></tr>
-      </table></div>
-      <div class="toolbar">
-        <button class="btn pri sm" id="btn-cloud-sync">今すぐ同期</button>
-        <button class="btn ghost sm" id="btn-cloud-pay">クレジットカードで支払う（Stripe）</button>
-        <button class="btn ghost sm" id="btn-cloud-kiosk">受付端末セットアップURLを発行</button>
-        <span class="sp"></span>
-        <button class="btn ghost sm" id="btn-cloud-logout">ログアウト</button>
-      </div>
-      <p class="note" style="margin-top:6px">最終同期：${CSx().lastAt ? new Date(CSx().lastAt).toLocaleString('ja-JP') : 'まだ'}　／　ログイン中は5分ごと＋給与の一括計算前に自動同期。決済は Stripe の安全なページで行われ、カード番号が当サービスに保存されることはありません。</p>
-    ` : `
-      <p class="note" style="margin-bottom:10px">はじめての方は<b>新規登録（30日間無料）</b>、登録済みの方はログインしてください。データはクラウド（PostgreSQL）に自社専用領域として保存され、他社からは一切見えません（DB側の行レベルセキュリティで強制）。</p>
-      <div class="grid2">
-        <div class="field"><label>会社名（新規登録のとき）</label><input id="cl-coname" placeholder="例：株式会社サンプル"></div>
-        <div class="field"><label>メールアドレス</label><input id="cl-email" value="${esc((S.cloudSync && S.cloudSync.loginEmail) || '')}" autocomplete="username"></div>
-        <div class="field"><label>パスワード（8文字以上）</label><input id="cl-pass" type="password" autocomplete="current-password"></div>
-      </div>
-      <div class="toolbar" style="margin-top:4px">
-        <button class="btn pri sm" id="btn-cloud-signup">新規登録（30日無料で開始）</button>
-        <button class="btn ghost sm" id="btn-cloud-login">ログイン</button>
-      </div>
-      <details class="acc" style="margin-top:8px"><summary>接続先の変更（通常は不要）</summary><div class="inner">
-        <div class="grid2">
-          <div class="field"><label>Project URL</label><input data-p="cloud.url" value="${esc(S.cloud.url)}" placeholder="https://xxxx.supabase.co"></div>
-          <div class="field"><label>anon public キー</label><input data-p="cloud.anonKey" value="${esc(S.cloud.anonKey)}" placeholder="eyJhbGciOi…"></div>
-        </div>
-        <p class="note">運営から案内された値をそのまま使用してください。</p>
-      </div></details>
-    `}
+    <div class="wiz-top"><b>設定の進捗</b><span class="wiz-pct">${doneCount} / ${CALC_STEPS.length} 完了（${pct}%）</span></div>
+    <div class="wiz-bar"><div class="wiz-bar-fill" style="width:${pct}%"></div></div>
+    <div class="wiz-pills">${pills}</div>
+    <p class="note" style="margin-top:8px">5つの設定をページ送りで確認していきます。各ページで内容を確認し「保存して次へ」を押すと、上のバーが進みます。番号を直接押して移動することもできます。</p>
   </div>
+  ${doneCount === CALC_STEPS.length ? `<div class="card" style="border-left:4px solid var(--green)"><b style="color:var(--green)">✓ 給与計算の設定はすべて完了しています。</b><p class="note" style="margin-top:4px">各月の給与は「その月に有効なセット」で自動計算されます。料率改定があれば、ステップ②「適用期間」で新しい開始月のセットを追加してください。</p></div>` : ''}
+  ${cards[CALC_STEP]}
+  <div class="card wiz-nav">
+    <button class="btn ghost" id="btn-calc-prev"${CALC_STEP === 0 ? ' disabled' : ''}>← 戻る</button>
+    <span class="note" style="flex:1;text-align:center">ステップ ${CALC_STEP + 1} / ${CALC_STEPS.length}　${esc(CALC_STEPS[CALC_STEP].title)}</span>
+    <button class="btn pri" id="btn-calc-next">${CALC_STEP === CALC_STEPS.length - 1 ? 'この内容で保存して完了' : '保存して次へ →'}</button>
+  </div>`;
+};
 
+renderers.data = function () {
+  $('#data-body').innerHTML = `
   <div class="card">
-    <h3>給与明細の一括メール送信（GAS連携）</h3>
-    <p class="note" style="margin-bottom:10px">サーバー不要で運用するため、Google Apps Script（無料）のWebアプリ経由でGmail送信します。下のサンプルコードを貼るだけで動きます。1通ずつなら設定不要（メールアプリが開きます）。</p>
-    <div class="field"><label>GAS WebアプリURL</label><input data-p="gasUrl" value="${esc(S.gasUrl)}" placeholder="https://script.google.com/macros/s/…/exec"></div>
-    <details class="acc"><summary>GASサンプルコード（コピーして貼り付け）</summary><div class="inner">
-      <code class="gas" id="gas-code">${esc(GAS_SAMPLE)}</code>
-      <button class="btn ghost sm" id="btn-gas-copy" style="margin-top:8px">コードをコピー</button>
-    </div></details>
+    <h3>会社情報</h3>
+    <div class="grid2">
+      <div class="field"><label>会社名（明細・QRカードに表示）</label><input data-p="company.name" value="${esc(S.company.name)}"></div>
+      <div class="field"><label>電話番号</label><input data-p="company.tel" value="${esc(S.company.tel)}"></div>
+      <div class="field"><label>住所</label><input data-p="company.address" value="${esc(S.company.address)}"></div>
+      <div class="field"><label>代表メール</label><input data-p="company.email" value="${esc(S.company.email)}"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -2085,7 +2248,7 @@ renderers.set = function () {
 };
 
 function readSetTable(name, cols) {
-  return $$(`#set-body [data-tbl="${name}"] tbody tr`).map(tr => {
+  return $$(`#calc-body [data-tbl="${name}"] tbody tr`).map(tr => {
     const o = {};
     cols.forEach(c => {
       const v = tr.querySelector(`[data-col="${c}"]`).value.trim();
@@ -2094,31 +2257,55 @@ function readSetTable(name, cols) {
     return o;
   }).filter(o => cols.some(c => o[c] !== null));
 }
-$('#v-set').addEventListener('click', async e => {
-  const id = e.target.id;
+async function saveCalcInputs() {
+  const cur = S.rateHistory.find(r => r.effectiveFrom === RS_SEL) || S.rateHistory[S.rateHistory.length - 1];
+  $$('#calc-body [data-p], #data-body [data-p]').forEach(el => {
+    const path = el.dataset.p.split('.');
+    let o = S; while (path.length > 1) o = o[path.shift()];
+    let v = el.value;
+    if (el.tagName === 'SELECT' && (v === 'true' || v === 'false')) v = v === 'true';
+    else if (el.type === 'number') v = Number(v) || 0;
+    o[path[0]] = v;
+  });
+  $$('#calc-body [data-rs]').forEach(el => {            // 選択中の料率セットへ
+    const path = el.dataset.rs.split('.');
+    let o = cur; while (path.length > 1) o = o[path.shift()];
+    o[path[0]] = el.type === 'number' ? (Number(el.value) || 0) : el.value;
+  });
+  // ウィザードは1ページずつ表示するため、DOMに在る表だけ更新（不在の表を空で上書きしない）
+  const gt = n => $(`#calc-body [data-tbl="${n}"]`);
+  if (gt('kyuyoKojo')) cur.taxTables.kyuyoKojo = readSetTable('kyuyoKojo', ['upTo', 'rate', 'add']);
+  if (gt('kisoKojo')) cur.taxTables.kisoKojo = readSetTable('kisoKojo', ['upTo', 'amount']);
+  if (gt('zeigaku')) cur.taxTables.zeigaku = readSetTable('zeigaku', ['upTo', 'rate', 'sub']);
+  if (gt('otsuTable')) cur.taxTables.otsuTable = readSetTable('otsuTable', ['upTo', 'amount'])
+    .sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity));
+  ensureRateHistory();
+  await saveSettings();
+}
+['#v-calc', '#v-data'].forEach(sel => $(sel).addEventListener('click', async e => {
+  const btn = e.target.closest('button');
+  const id = (btn && btn.id) || e.target.id;
   const curSet = () => S.rateHistory.find(r => r.effectiveFrom === RS_SEL) || S.rateHistory[S.rateHistory.length - 1];
+  // 進捗ピルで任意ステップへ（現在ページの入力は保存してから移動）
+  const pill = e.target.closest('[data-step]');
+  if (pill) { await saveCalcInputs(); CALC_STEP = Number(pill.dataset.step); await saveSettings(); renderers.calc(); return; }
+  if (id === 'btn-calc-prev') {
+    await saveCalcInputs();
+    if (CALC_STEP > 0) CALC_STEP--;
+    await saveSettings(); renderers.calc(); return;
+  }
+  if (id === 'btn-calc-next') {
+    await saveCalcInputs();
+    if (!S.calcDone) S.calcDone = {};
+    S.calcDone[CALC_STEPS[CALC_STEP].key] = true;          // このステップを「完了」に
+    const allDone = CALC_STEPS.every(s => S.calcDone[s.key]);
+    if (CALC_STEP < CALC_STEPS.length - 1) CALC_STEP++;
+    await saveSettings(); renderers.calc();
+    toast(allDone ? '給与計算の設定がすべて完了しました。' : 'このステップを保存しました。次のステップへ進みます。');
+    return;
+  }
   if (id === 'btn-set-save') {
-    const cur = curSet();
-    $$('#set-body [data-p]').forEach(el => {
-      const path = el.dataset.p.split('.');
-      let o = S; while (path.length > 1) o = o[path.shift()];
-      let v = el.value;
-      if (el.tagName === 'SELECT' && (v === 'true' || v === 'false')) v = v === 'true';
-      else if (el.type === 'number') v = Number(v) || 0;
-      o[path[0]] = v;
-    });
-    $$('#set-body [data-rs]').forEach(el => {            // 選択中の料率セットへ
-      const path = el.dataset.rs.split('.');
-      let o = cur; while (path.length > 1) o = o[path.shift()];
-      o[path[0]] = el.type === 'number' ? (Number(el.value) || 0) : el.value;
-    });
-    cur.taxTables.kyuyoKojo = readSetTable('kyuyoKojo', ['upTo', 'rate', 'add']);
-    cur.taxTables.kisoKojo = readSetTable('kisoKojo', ['upTo', 'amount']);
-    cur.taxTables.zeigaku = readSetTable('zeigaku', ['upTo', 'rate', 'sub']);
-    cur.taxTables.otsuTable = readSetTable('otsuTable', ['upTo', 'amount'])
-      .sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity));
-    ensureRateHistory();
-    await saveSettings();
+    await saveCalcInputs();
     toast('設定を保存しました。各月の給与は「その月に有効なセット」で計算されます。');
   }
   if (id === 'btn-rs-add') {
@@ -2129,7 +2316,7 @@ $('#v-set').addEventListener('click', async e => {
     clone.effectiveFrom = v;
     S.rateHistory.push(clone);
     ensureRateHistory(); RS_SEL = v;
-    await saveSettings(); renderers.set();
+    await saveSettings(); renderers.calc();
     toast(ymJP(v) + 'から適用のセットを作成しました（現在値の複製）。数値を変えて「設定を保存」してください。');
   }
   if (id === 'btn-rs-del') {
@@ -2137,7 +2324,7 @@ $('#v-set').addEventListener('click', async e => {
     if (!confirm(ymJP(RS_SEL) + 'から適用のセットを削除します。以降の月は1つ前のセットで計算されるようになります。よろしいですか？')) return;
     S.rateHistory = S.rateHistory.filter(r => r.effectiveFrom !== RS_SEL);
     RS_SEL = null; ensureRateHistory();
-    await saveSettings(); renderers.set(); toast('削除しました。');
+    await saveSettings(); renderers.calc(); toast('削除しました。');
   }
   if (id === 'btn-tax-reset') {
     const cur = curSet();
@@ -2148,7 +2335,7 @@ $('#v-set').addEventListener('click', async e => {
     cur.taxTables.otsuTable = keepOtsu;
     cur.rateLabel = D.rateLabel; cur.taxTableLabel = D.taxTableLabel;
     ensureRateHistory();
-    await saveSettings(); renderers.set(); toast('既定値に戻しました。');
+    await saveSettings(); renderers.calc(); toast('既定値に戻しました。');
   }
   if (id === 'btn-otsu-add') {
     $('#otsu-rows').insertAdjacentHTML('beforeend', `<tr>
@@ -2174,16 +2361,42 @@ $('#v-set').addEventListener('click', async e => {
   }
   if (id === 'btn-restore') $('#restore-file').click();
   if (id === 'btn-wipe') {
-    if (!confirm('すべてのデータ（従業員・勤怠・給与・設定）を削除します。元に戻せません。よろしいですか？')) return;
-    if (!confirm('本当に削除しますか？（バックアップ保存をおすすめします）')) return;
-    for (const s of ['employees', 'attendance', 'punches', 'payroll', 'settings']) await dbClear(s);
-    await loadState(); renderers.set(); toast('全データを削除しました。');
+    const linked = window.cloudCfg && window.cloudCfg() && S.cloudSync && S.cloudSync.companyId;
+    if (!confirm('従業員・勤怠・給与・各種設定をすべて削除して、初期状態に戻します。' + (linked ? '\nクラウド上の自社データも削除されます（ログインは保持します）。' : '') + '\n元に戻せません。よろしいですか？')) return;
+    if (!confirm('本当に削除しますか？（先にバックアップ保存をおすすめします）')) return;
+    await fullReset();
+    renderers.calc(); renderers.data && renderers.data(); renderers.plan && renderers.plan();
+    toast(linked ? '全データを削除しました（クラウド含む・ログインは保持）。' : '全データを削除しました。');
   }
-  if (id === 'btn-seed2') { await seedSample(); renderers.set(); }
+  if (id === 'btn-seed2') { await seedSample(); renderers.data(); }
+}));
+/* ---------- 全データ初期化（業務データ＋クラウド、ログイン・接続は保持） ---------- */
+async function fullReset() {
+  const linked = window.cloudCfg && window.cloudCfg() && S.cloudSync && S.cloudSync.companyId;
+  if (linked) { try { await window.wipeCloudData(); } catch (e) { toast('クラウド側の削除に一部失敗：' + e.message); } }
+  for (const s of ['employees', 'attendance', 'punches', 'payroll']) await dbClear(s);
+  const D = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));   // 設定は初期化…
+  D.cloud = S.cloud;                                        // …接続先（埋め込み）は維持
+  D.cloudSync = S.cloudSync || {};                          // …ログイン情報も維持
+  await dbPut('settings', { key: 'main', value: D });
+  await loadState(); RS_SEL = null; CALC_STEP = 0;
+  return linked;
+}
+/* ---------- ホームの「本番用にリセット」ボタン ---------- */
+$('#v-home').addEventListener('click', async e => {
+  if (e.target.id !== 'btn-home-reset') return;
+  const linked = window.cloudCfg && window.cloudCfg() && S.cloudSync && S.cloudSync.companyId;
+  if (!confirm('お試し用のサンプルデータ（従業員・勤怠・給与）を削除して、まっさらな本番用の状態に戻します。' + (linked ? '\nクラウド上の自社データも削除されます（ログインは保持します）。' : '') + '\n元に戻せません。よろしいですか？')) return;
+  await fullReset();
+  renderers.home();
+  toast('本番用にリセットしました。「従業員」タブから登録を始めてください。');
 });
-$('#v-set').addEventListener('change', e => {
+$('#v-calc').addEventListener('change', e => {
   if (e.target.id === 'restore-file') restoreBackup(e.target);
-  if (e.target.id === 'rs-sel') { RS_SEL = e.target.value; renderers.set(); }
+  if (e.target.id === 'rs-sel') { RS_SEL = e.target.value; renderers.calc(); }
+});
+$('#v-data').addEventListener('change', e => {
+  if (e.target.id === 'restore-file') restoreBackup(e.target);
 });
 async function restoreBackup(input) {
   const f = input.files[0]; if (!f) return;
@@ -2239,6 +2452,7 @@ async function seedSample() {
       }
     }
   }
+  S.sampleLoaded = true; await saveSettings();   // ホームに「本番リセット」を出すための試用フラグ
   toast('サンプルデータを投入しました（従業員3名＋今月の勤怠）。');
   show('home');
 }
@@ -2519,6 +2733,25 @@ async function syncAll(silent) {
 }
 window.syncAll = syncAll;
 
+/* ---------- クラウドの自社データを全消去（全データ削除＝真の初期化用） ---------- */
+async function wipeCloudData() {
+  if (!cloudCfg()) return false;
+  const tok = await getTok();
+  if (!tok) return false;
+  const cid = await ensureCompany();
+  if (!cid) return false;
+  const f = `company_id=eq.${cid}`;
+  // employees を消すと roster_lite はトリガーで自動削除される
+  for (const tbl of ['punches', 'attendance', 'payroll', 'rate_sets', 'app_settings', 'employees']) {
+    try { await sb(`/rest/v1/${tbl}?${f}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); }
+    catch (e) { /* 一部失敗しても続行 */ }
+  }
+  CS().punchCursor = null;
+  await saveSettings();
+  return true;
+}
+window.wipeCloudData = wipeCloudData;
+
 /* ---------- 最新の料率・税表をカタログから取得 ---------- */
 async function fetchLatestRates() {
   const res = await sb('/rest/v1/rate_catalog?select=*&published=is.true&order=effective_from.desc&limit=1');
@@ -2540,7 +2773,7 @@ async function fetchLatestRates() {
   ensureRateHistory();
   await saveSettings();
   if (typeof RS_SEL !== 'undefined') RS_SEL = c.effective_from;
-  renderers.set();
+  renderers.calc();
   toast(`${ymJP(c.effective_from)}〜「${c.label}」を追加しました。内容を必ず公式情報と照合してください。`);
 }
 
@@ -2560,15 +2793,16 @@ async function createKioskSetupURL() {
 }
 
 /* ---------- 設定画面のボタン（委譲） ---------- */
-$('#v-set').addEventListener('click', async ev => {
+/* ---------- 契約プラン画面のボタン（委譲） ---------- */
+$('#v-plan').addEventListener('click', async ev => {
   const id = ev.target.id;
-  if (!/^btn-(cloud|rates)-/.test(id)) return;
+  if (!/^btn-cloud-/.test(id)) return;
   try {
     const readConn = async () => {
-      const u = document.querySelector('#set-body [data-p="cloud.url"]');
-      const k = document.querySelector('#set-body [data-p="cloud.anonKey"]');
-      if (u) S.cloud.url = u.value.trim();
-      if (k) S.cloud.anonKey = k.value.trim();
+      const u = document.querySelector('#plan-body [data-p="cloud.url"]');
+      const k = document.querySelector('#plan-body [data-p="cloud.anonKey"]');
+      if (u && u.value.trim()) S.cloud.url = u.value.trim();
+      if (k && k.value.trim()) S.cloud.anonKey = k.value.trim();
       if (!S.cloud.deviceId) S.cloud.deviceId = 'admin-' + Math.random().toString(36).slice(2, 8);
       await saveSettings();
     };
@@ -2585,8 +2819,8 @@ $('#v-set').addEventListener('click', async ev => {
       if (!S.company.name) S.company.name = nm;
       await loadPlans().catch(() => {});
       await saveSettings();
-      toast(`登録が完了しました（30日間の無料トライアル開始）。「今すぐ同期」でデータ保護が始まります。`);
-      renderers.set();
+      toast('登録が完了しました（30日間の無料トライアル開始）。「今すぐ同期」でデータ保護が始まります。');
+      renderers.plan();
     }
     if (id === 'btn-cloud-login') {
       await readConn();
@@ -2596,10 +2830,10 @@ $('#v-set').addEventListener('click', async ev => {
       const cid = await ensureCompany();
       if (!cid) { toast('ログインしました。会社が未登録です — 会社名を入れて「新規登録」を押してください。'); }
       else { await loadPlans().catch(() => {}); toast('ログインしました。'); }
-      renderers.set();
+      renderers.plan();
     }
-    if (id === 'btn-cloud-logout') { await cloudLogout(); toast('ログアウトしました。'); renderers.set(); }
-    if (id === 'btn-cloud-sync') { toast('同期しています…'); await syncAll(false); renderers.set(); }
+    if (id === 'btn-cloud-logout') { await cloudLogout(); toast('ログアウトしました。'); renderers.plan(); }
+    if (id === 'btn-cloud-sync') { toast('同期しています…'); await syncAll(false); renderers.plan(); }
     if (id === 'btn-cloud-pay') {
       if (!CS().payUrl) { toast('決済リンクが未設定です（運営にお問い合わせください）。'); return; }
       const url = CS().payUrl + (CS().payUrl.includes('?') ? '&' : '?') +
@@ -2613,8 +2847,13 @@ $('#v-set').addEventListener('click', async ev => {
       try { await navigator.clipboard.writeText(url); toast('受付端末セットアップURLをコピーしました。受付iPadのブラウザで一度開けば設定完了です。'); }
       catch { prompt('このURLを受付端末のブラウザで開いてください', url); }
     }
-    if (id === 'btn-rates-fetch') { await fetchLatestRates(); }
   } catch (err) { toast('エラー：' + err.message); }
+});
+
+/* ---------- 設定画面：最新の料率・税表を取得（委譲） ---------- */
+$('#v-calc').addEventListener('click', async ev => {
+  if (ev.target.id !== 'btn-rates-fetch') return;
+  try { await fetchLatestRates(); } catch (err) { toast('エラー：' + err.message); }
 });
 
 /* ---------- 起動フック ---------- */
