@@ -485,6 +485,12 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
   </div>
 </div></div>
 
+<div class="modal-bg" id="m-mail"><div class="modal" style="max-width:640px">
+  <h3>メールで明細を送る（GASなし）<button class="x" data-close="m-mail">×</button></h3>
+  <div id="mail-host"></div>
+  <div class="foot"><span class="sp"></span><button class="btn ghost" data-close="m-mail">閉じる</button></div>
+</div></div>
+
 <div id="printRoot"></div>
 <div class="toast" id="toast"></div>
 <script>
@@ -832,6 +838,8 @@ let EMP = [];            // employees cache
 const empById = id => EMP.find(e => e.id === id);
 const empByCode = code => EMP.find(e => String(e.code) === String(code));
 const activeEmps = () => EMP.filter(e => e.status !== '退職');
+const SAMPLE_EMPS = [['1001', '佐藤 一郎'], ['1002', '鈴木 花子'], ['1003', '田中 勇']];
+const isSampleData = () => EMP.length > 0 && SAMPLE_EMPS.every(([c, n]) => EMP.some(e => String(e.code) === c && e.name === n));
 
 async function loadState() {
   const saved = await dbGet('settings', 'main');
@@ -944,7 +952,7 @@ renderers.home = async function () {
 
   // アラート
   const alerts = [];
-  if (S.sampleLoaded) {
+  if (S.sampleLoaded || isSampleData()) {
     alerts.push(`<div class="alert"><b>サンプルデータで試用中です。</b>表示中の従業員・勤怠・給与はお試し用です。本番運用を始めるときは、下のボタンでサンプルを消去してまっさらな状態に戻してください。<div style="margin-top:8px"><button class="btn ghost sm" id="btn-home-reset">サンプルを消して本番用にリセット</button></div></div>`);
   }
   const over45 = Object.entries(otByEmp).filter(([, m]) => m > 45 * 60);
@@ -1580,7 +1588,7 @@ renderers.pay = async function () {
   renderPayList(ym);
   const mc = $('#pay-mailcfg');
   if (mc) mc.innerHTML = `<details class="acc" style="margin-top:14px"><summary>メール一括送信の設定（GAS・初回のみ）</summary><div class="inner">
-    <p class="note" style="margin-bottom:8px">給与明細を在籍者へ一括メール送信するには、無料のGoogle Apps Script（GAS）を一度だけ設定します（サーバー不要）。未設定でも、各明細の画面から1通ずつメール作成できます。退職者は送信対象から自動で除外されます。</p>
+    <p class="note" style="margin-bottom:8px"><b>GASなしでも送れます：</b>「全員へメール送信」を押すと、お一人ずつ端末のメールアプリで下書き（明細を本文に記載・<b>PDF添付なし</b>）が開きます。<b>PDF添付で全員へ自動送信</b>したい場合は、下記の無料Google Apps Script（GAS）を一度だけ設定してください（サーバー不要）。退職者は送信対象から自動で除外されます。</p>
     <div class="field"><label>GAS WebアプリURL</label><input id="pay-gas-url" value="${esc(S.gasUrl || '')}" placeholder="https://script.google.com/macros/s/…/exec"></div>
     <details class="acc"><summary>GASサンプルコード（コピーして貼り付け）</summary><div class="inner">
       <code class="gas">${esc(GAS_SAMPLE)}</code>
@@ -1890,22 +1898,52 @@ const slipPdfItem = (e, p) => ({ to: e.email, subject: mailSubject(p), body: mai
 
 $('#btn-pay-mailall').addEventListener('click', async () => {
   const ym = $('#pay-month').value || thisYM();
-  if (!S.gasUrl) { toast('下の「メール一括送信の設定」でGASのURLを登録してください（初回のみ）。'); return; }
   if (!PAY.length) {                                  // まだ計算していなければ自動で計算
     toast('給与を計算しています…');
     await payrollCalcAll(ym); renderPayList(ym);
   }
-  const items = PAY.map(p => ({ p, e: empById(p.empId) }))
-    .filter(x => x.e && x.e.email && x.e.status !== '退職')   // 退職者・メール未登録は除外
-    .map(({ p, e }) => slipPdfItem(e, p));
-  if (!items.length) { toast('メールアドレス登録済みの在籍者がいません（従業員画面でメールを登録してください）。'); return; }
-  if (!confirm(`${ymJP(ym)}分の給与明細を、在籍者 ${items.length}名へPDF添付でメール送信します。\n（退職者は対象外です）\nよろしいですか？`)) return;
-  try {
-    await gasPost({ items });
-    toast(`${items.length}件の送信リクエストを実行しました（結果はGASの実行ログ・受信箱でご確認ください）。`);
-  } catch (err) {
-    toast('送信に失敗しました：' + err.message);
+  const list = PAY.map(p => ({ p, e: empById(p.empId) }))
+    .filter(x => x.e && x.e.email && x.e.status !== '退職');   // 退職者・メール未登録は除外
+  if (!list.length) { toast('メールアドレス登録済みの在籍者がいません（従業員画面でメールを登録してください）。'); return; }
+  if (S.gasUrl) {
+    // GAS設定あり → PDF添付でボタン1つの自動一括送信
+    const items = list.map(({ p, e }) => slipPdfItem(e, p));
+    if (!confirm(`${ymJP(ym)}分の給与明細を、在籍者 ${items.length}名へPDF添付でメール送信します。\n（退職者は対象外です）\nよろしいですか？`)) return;
+    try {
+      await gasPost({ items });
+      toast(`${items.length}件の送信リクエストを実行しました（結果はGASの実行ログ・受信箱でご確認ください）。`);
+    } catch (err) {
+      toast('送信に失敗しました：' + err.message);
+    }
+  } else {
+    // GAS未設定 → サーバー不要。お一人ずつ、端末のメールアプリで下書きを開く
+    openMailManual(ym, list);
   }
+});
+/* ---------- GASなしの一括メール（メールアプリで1人ずつ下書きを開く） ---------- */
+function openMailManual(ym, list) {
+  list = list.slice().sort((a, b) => String(a.e.code).localeCompare(String(b.e.code), 'ja', { numeric: true }));
+  const rows = list.map(({ p, e }) => {
+    const href = `mailto:${encodeURIComponent(e.email)}?subject=${encodeURIComponent(mailSubject(p))}&body=${encodeURIComponent(slipText(e, p))}`;
+    return `<tr><td>${esc(e.name)}<br><span class="note">${esc(e.email)}</span></td>
+      <td class="num" style="text-align:right;white-space:nowrap">${fmtYen(p.data.net)}</td>
+      <td><a class="btn ghost sm" style="text-decoration:none" href="${href}" data-mk>メール作成</a></td></tr>`;
+  }).join('');
+  $('#mail-host').innerHTML = `
+    <p class="note" style="margin-bottom:8px"><b>${esc(ymJP(ym))}分</b>・在籍者 ${list.length}名。GASを設定していないため、<b>お一人ずつ端末のメールアプリで下書きを開きます</b>（件名・本文は自動入力／明細は本文に記載・<b>PDF添付はなし</b>）。各行の「メール作成」を押し、内容を確認して送信してください。</p>
+    <p class="note" style="margin-bottom:12px;color:var(--ochre)">PDFも付けたい場合は、先に下の「全明細を印刷」でブラウザの「PDFに保存」を行い、各メールに手で添付してください。GASを設定すれば<b>ボタン1つで全員にPDF自動送信</b>できます（給与画面下の「メール一括送信の設定」）。</p>
+    <div class="toolbar" style="margin-bottom:10px"><button class="btn ghost sm" id="btn-mail-print">全明細を印刷（PDF保存用）</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>従業員</th><th class="num" style="text-align:right">差引支給額</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  openModal('m-mail');
+}
+$('#m-mail').addEventListener('click', e => {
+  if (e.target.id === 'btn-mail-print') {
+    $('#printRoot').innerHTML = PAY.map(p => slipHTML(empById(p.empId), p, p.ym)).join('');
+    window.print();
+    return;
+  }
+  const mk = e.target.closest('[data-mk]');
+  if (mk) { mk.textContent = '作成済み ✓'; mk.classList.remove('ghost'); mk.style.color = 'var(--green)'; mk.style.borderColor = 'var(--green)'; }
 });
 $('#btn-slip-mailpdf').addEventListener('click', async () => {
   if (!slipTarget) return;
