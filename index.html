@@ -18,7 +18,7 @@ body{font-family:"Noto Sans JP",-apple-system,sans-serif;color:var(--ink);backgr
 .num{font-variant-numeric:tabular-nums}
 .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
 header{position:sticky;top:0;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);z-index:10}
-.hd{display:flex;align-items:center;gap:10px;padding:13px 0}
+.hd{display:flex;align-items:center;gap:10px;padding-top:13px;padding-bottom:13px}
 .logo{width:30px;height:30px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:var(--r)}
 .brand{font-weight:900;font-size:15px}.brand span{font-weight:400;color:var(--mut);font-size:12px}
 .sp{flex:1}
@@ -65,6 +65,8 @@ h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
 .pl li{padding-left:18px;position:relative;margin-bottom:4px}
 .pl li::before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;background:var(--green);border-radius:1px}
 .pbadge{display:inline-block;background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:var(--r);margin-bottom:8px}
+.all-inc{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);padding:11px 14px;font-size:14px;font-weight:600;color:var(--ink);margin:6px 0 0;line-height:1.7}
+.all-inc b{color:var(--green);font-weight:900}
 
 .steps{counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
@@ -107,7 +109,7 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
   .nav a:not(.cta){display:none}
   .nav a.cta{margin-left:0}
   header .cta{padding:8px 15px;font-size:13px;white-space:nowrap}
-  .hd{padding:11px 0;gap:9px;flex-wrap:nowrap}
+  .hd{padding-top:11px;padding-bottom:11px;gap:9px;flex-wrap:nowrap}
   /* ヒーローの2ボタンを同じ幅で横1列に */
   .hero-cta{flex-wrap:nowrap;gap:8px}
   .hero-cta .cta.big{flex:1;min-width:0;text-align:center;font-size:14px;padding:13px 4px;margin:0}
@@ -191,23 +193,19 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 
 <section class="sec" id="price"><div class="wrap">
   <h2><span class="bar"></span>料金プラン</h2>
-  <p class="sub">従業員数で自動判定されるシンプルな月額制。すべてのプランで全機能が使えます。お支払いはクレジットカード（Stripe）。</p>
+  <p class="sub">従業員数で自動判定されるシンプルな月額制。お支払いはクレジットカード（Stripe）。</p>
+  <div class="all-inc">どのプランも <b>全機能利用可</b>・<b>受付端末 無制限</b>・<b>7日間無料</b>（PROは導入サポート付き）</div>
   <div class="price">
     <div class="pl"><div class="pn">STARTER</div><div class="cap">従業員10名まで</div>
-      <div class="pr num">¥1,000<small>／月（税別）</small></div>
-      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+      <div class="pr num">¥1,000<small>／月（税別）</small></div></div>
     <div class="pl"><div class="pn">BASIC</div><div class="cap">従業員30名まで</div>
-      <div class="pr num">¥3,000<small>／月（税別）</small></div>
-      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+      <div class="pr num">¥3,000<small>／月（税別）</small></div></div>
     <div class="pl hot"><span class="pbadge">人気</span><div class="pn">GROWTH</div><div class="cap">従業員50名まで</div>
-      <div class="pr num">¥5,000<small>／月（税別）</small></div>
-      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+      <div class="pr num">¥5,000<small>／月（税別）</small></div></div>
     <div class="pl"><div class="pn">ENTERPRISE</div><div class="cap">従業員100名まで</div>
-      <div class="pr num">¥9,000<small>／月（税別）</small></div>
-      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+      <div class="pr num">¥9,000<small>／月（税別）</small></div></div>
     <div class="pl"><div class="pn">PRO</div><div class="cap">従業員100名超</div>
-      <div class="pr num">¥15,000<small>／月（税別）</small></div>
-      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>導入サポート</li></ul></div>
+      <div class="pr num">¥15,000<small>／月（税別）</small></div></div>
   </div>
   <p class="notice" style="margin-top:12px">※従業員数は「在職」登録者数で毎月自動判定されます。登録時にカードを登録 → <b>7日間無料</b>、8日目から自動課金。解約はアプリ内「契約」タブからいつでも可能で、<b>無料期間内の解約は料金がかかりません</b>。</p>
 </div></section>
