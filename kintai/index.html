@@ -93,6 +93,14 @@ h3{font-size:13.5px;font-weight:700;margin:0 0 8px}
 .field input:focus,.field select:focus,.field textarea:focus,.in:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+.grid3 .field label{min-height:2.8em}                       /* ラベルを2行ぶん確保＝入力欄の高さを揃える */
+.grid3 .field.wide,.grid2 .field.wide{grid-column:1/-1}     /* 横長フィールド（料率ラベル等） */
+.field .req{background:#FBEAEA}                              /* 必須入力欄を薄い赤で示す */
+.rs-block{margin-bottom:12px}
+.rs-lbl{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:5px;line-height:1.55}
+.rs-row{display:flex;gap:8px;align-items:center}
+.rs-row .fld{flex:1;min-width:0}
+.rs-row .btn{flex:0 0 auto;white-space:nowrap}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
 .chk{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:6px 0}
 .chk input{width:17px;height:17px;accent-color:var(--green)}
@@ -2190,8 +2198,8 @@ renderers.calc = function () {
     RS_SEL = S.rateHistory[S.rateHistory.length - 1].effectiveFrom;
   const cur = S.rateHistory.find(r => r.effectiveFrom === RS_SEL);
   const t = cur.taxTables;
-  const numIn = (p, v, w = 108, step = 'any') => `<input type="number" step="${step}" data-p="${p}" value="${v}" style="width:${w}px">`;
-  const rsIn = (p, v, w = 108, step = 'any') => `<input type="number" step="${step}" data-rs="${p}" value="${v}" style="width:${w}px">`;
+  const numIn = (p, v, w = 108, step = 'any') => `<input class="req" type="number" step="${step}" data-p="${p}" value="${v}" style="width:${w}px">`;
+  const rsIn = (p, v, w = 108, step = 'any') => `<input class="req" type="number" step="${step}" data-rs="${p}" value="${v}" style="width:${w}px">`;
   const tblRows = (rows, cols) => rows.map(r => '<tr>' + cols.map(c =>
     `<td><input type="number" step="any" data-col="${c}" value="${r[c] === null || r[c] === undefined ? '' : r[c]}" placeholder="${c === 'upTo' ? '上限なし' : ''}"></td>`).join('') + '</tr>').join('');
   
@@ -2212,17 +2220,24 @@ renderers.calc = function () {
     `
   <div class="card">
     <h3>料率・税表の適用期間 <span class="tag g">月別に自動適用</span></h3>
-    <p class="note" style="margin-bottom:10px">給与は「<b>その月に有効なセット</b>」で自動計算します。改定があったら、新しい開始月のセットを追加して数値を直すだけ。<b>過去の月の計算には影響しません</b>（例：5月から改定 → 4月分はいつ再計算しても4月のセットを使用）。</p>
-    <div class="toolbar" style="margin-bottom:6px">
-      <select id="rs-sel" class="fld" style="min-width:180px">${S.rateHistory.map(r => `<option value="${r.effectiveFrom}" ${r.effectiveFrom === RS_SEL ? 'selected' : ''}>${rsRangeLabel(r)}</option>`).join('')}</select>
-      <span class="sp"></span>
-      <input type="month" id="rs-new" class="fld" style="width:150px">
-      <button class="btn ghost sm" id="btn-rs-add">この月から新セット追加</button>
-      <button class="btn ghost sm" id="btn-rs-del" ${S.rateHistory.length < 2 ? 'disabled' : ''}>選択中を削除</button>
-      <button class="btn pri sm" id="btn-rates-fetch">最新の料率・税表を取得</button>
+    <p class="note" style="margin-bottom:12px">給与は「<b>その月に有効なセット</b>」で自動計算します。料率や税額が改定されたら、<b>改定が始まる月のセットを新しく追加</b>して数値を直すだけ。<b>過去の月の計算には影響しません</b>（例：5月から改定 → 4月分はいつ再計算しても4月のセットを使用）。</p>
+    <div class="rs-block">
+      <label class="rs-lbl">① いま編集している期間（下の「料率」「割増率」「源泉所得税」はこの期間の内容です）</label>
+      <div class="rs-row">
+        <select id="rs-sel" class="fld">${S.rateHistory.map(r => `<option value="${r.effectiveFrom}" ${r.effectiveFrom === RS_SEL ? 'selected' : ''}>${rsRangeLabel(r)}</option>`).join('')}</select>
+        <button class="btn ghost sm" id="btn-rs-del" ${S.rateHistory.length < 2 ? 'disabled' : ''}>この期間を削除</button>
+      </div>
     </div>
-    <p class="note" style="margin-top:4px;color:var(--ochre)"><b>ご注意：</b>「最新の料率・税表を取得」で追加される内容は運営が公式情報をもとに作成・配信するものですが、<b>適用前に必ず国税庁・協会けんぽ・日本年金機構の公式発表と照合し、貴社の責任でご確認ください</b>。取得しても過去の月の給与計算には影響しません（適用期間方式）。</p>
-    <p class="note">下の「料率・割増率」「源泉所得税」は、選択中セット <b>${ymJP(cur.effectiveFrom)}〜</b> の内容です。セットを切り替える前に「設定を保存」してください。</p>
+    <div class="rs-block">
+      <label class="rs-lbl">② 改定があったとき：改定が始まる月を選んで、新しい期間を追加</label>
+      <div class="rs-row">
+        <input type="month" id="rs-new" class="fld">
+        <button class="btn ghost sm" id="btn-rs-add">この月から追加</button>
+      </div>
+    </div>
+    <button class="btn pri sm" id="btn-rates-fetch">最新の料率・税表を取得</button>
+    <p class="note" style="margin-top:8px;color:var(--ochre)"><b>ご注意：</b>「最新の料率・税表を取得」で追加される内容は運営が公式情報をもとに作成・配信するものですが、<b>適用前に必ず国税庁・協会けんぽ・日本年金機構の公式発表と照合し、貴社の責任でご確認ください</b>。取得しても過去の月の給与計算には影響しません（適用期間方式）。</p>
+    <p class="note">セットを切り替える前に「設定を保存」してください。</p>
   </div>
   `,
     `
@@ -2236,7 +2251,7 @@ renderers.calc = function () {
       <div class="field"><label>厚生年金保険料率（%）</label>${rsIn('rates.pension', cur.rates.pension)}</div>
       <div class="field"><label>雇用保険・本人負担（%）</label>${rsIn('rates.empInsEmployee', cur.rates.empInsEmployee)}</div>
       <div class="field"><label>健保・厚年の本人負担割合（%）</label>${rsIn('rates.laborShare', cur.rates.laborShare)}</div>
-      <div class="field"><label>料率ラベル（表示用）</label><input data-rs="rateLabel" value="${esc(cur.rateLabel)}"></div>
+      <div class="field wide"><label>料率ラベル（表示用）</label><input class="req" data-rs="rateLabel" value="${esc(cur.rateLabel)}"></div>
     </div>
     <h3 style="margin-top:14px">割増率（%）</h3>
     <div class="grid3">
