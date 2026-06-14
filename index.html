@@ -26,6 +26,8 @@ header{position:sticky;top:0;background:rgba(255,255,255,.96);border-bottom:1px 
 .cta{display:inline-block;background:var(--green);color:#fff!important;padding:8px 20px;border-radius:var(--r);font-weight:700;text-decoration:none}
 .cta.big{font-size:16px;padding:14px 36px}
 .cta.ghost{background:#fff;color:var(--ink)!important;border:1px solid var(--line)}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.hero-cta .cta.big{margin:0}
 
 .hero{padding:72px 0 56px;border-bottom:1px solid var(--line)}
 .hero .tag{display:inline-block;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:700;padding:3px 12px;border-radius:var(--r);margin-bottom:16px}
@@ -47,7 +49,12 @@ h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
 
 .price{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:900px){.price{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:520px){.price{grid-template-columns:1fr}}
+@media(max-width:520px){.price{grid-template-columns:1fr;gap:8px}
+  .pl{padding:12px 16px}
+  .pl .pr{font-size:24px}
+  .pl .cap{margin:1px 0 5px}
+  .pl ul{margin:7px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 14px}
+  .pl li{margin-bottom:0}}
 .pl{border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center}
 .pl.hot{border:2px solid var(--green)}
 .pl .pn{font-size:13px;font-weight:700;color:var(--mut)}
@@ -70,6 +77,8 @@ h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
 table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
 th{background:var(--chip);text-align:left;padding:9px 12px;border:1px solid var(--line)}
 td{padding:8px 12px;border:1px solid var(--line)}
+.info th{width:150px;vertical-align:top}
+.info td{vertical-align:top}
 .faq dt{font-weight:900;margin-top:18px}
 .faq dt::before{content:'Q．';color:var(--green)}
 .faq dd{color:var(--mut);font-size:13.5px;margin-top:2px}
@@ -80,7 +89,7 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 
 .compare{background:var(--green-bg)}
 .cmp-wrap{overflow-x:auto}
-.cmp{font-size:14px;margin:8px 0 0}
+.cmp{font-size:14px;margin:8px 0 0;table-layout:fixed;width:100%}
 .cmp th,.cmp td{text-align:center;padding:12px 10px;border:1px solid var(--line);background:#fff}
 .cmp thead th{background:var(--chip);font-size:13px;vertical-align:middle}
 .cmp .cmp-note{font-weight:400;font-size:11px;color:var(--mut)}
@@ -92,16 +101,19 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 @media(max-width:600px){.cmp th,.cmp td{padding:9px 7px;font-size:12px}.cmp td.zk-price{font-size:15px}.cmp .save{font-size:11px}}
 /* ===== モバイル（スマホ幅）ヘッダー・ヒーロー調整 ===== */
 @media(max-width:640px){
-  /* ヘッダーはロゴ＋会社名＋申込ボタンだけにして、はみ出し・折り返しを防ぐ */
-  .brand{font-size:16px}
+  /* ヘッダーはロゴ＋会社名＋申込ボタンだけにして、折り返し・はみ出しを防ぐ */
+  .brand{font-size:16px;white-space:nowrap}
   .brand span{display:none}
   .nav a:not(.cta){display:none}
   .nav a.cta{margin-left:0}
   header .cta{padding:8px 15px;font-size:13px;white-space:nowrap}
-  .hd{padding:11px 0;gap:9px}
-  /* ヒーローの2つのボタンを縦並びに（横の余白で崩れていたのを解消） */
-  .hero .cta.big{display:block;width:100%;text-align:center;box-sizing:border-box;margin-left:0!important}
-  .hero .cta.big.ghost{margin-top:10px}
+  .hd{padding:11px 0;gap:9px;flex-wrap:nowrap}
+  /* ヒーローの2ボタンを同じ幅で横1列に */
+  .hero-cta{flex-wrap:nowrap;gap:8px}
+  .hero-cta .cta.big{flex:1;min-width:0;text-align:center;font-size:14px;padding:13px 4px;margin:0}
+  /* 安心設計：タイトル列を細く、説明列を広く */
+  .info th{width:118px}
+  .info th,.info td{padding:7px 8px;font-size:12px}
   /* 固定ヘッダーに見出しが隠れないように */
   section[id]{scroll-margin-top:64px}
 }
@@ -123,8 +135,10 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
   <span class="tag">中小企業のための勤怠・給与クラウド</span>
   <h1>勤怠管理や給与計算に、<span class="g">時間とお金</span>を<br>かけるのは、もうやめませんか。</h1>
   <p class="lead">QRをかざすだけで打刻。ボタン1回で残業・社会保険・源泉所得税まで自動計算し、給与明細PDFを全員へメール。しかも料金は<b>「1人あたり」ではなく会社単位の定額</b>。人数が増えても増えにくく、一般的なシステムの<b>半額以下</b>になることもあります。</p>
-  <a class="cta big" href="./kintai/">7日間無料で始める</a>
-  <a class="cta big ghost" href="#compare" style="margin-left:10px">料金を比べる</a>
+  <div class="hero-cta">
+    <a class="cta big" href="./kintai/">7日間無料で始める</a>
+    <a class="cta big ghost" href="#compare">料金を比べる</a>
+  </div>
   <p class="note">登録時にカード登録 → 7日間無料 ／ 期間内の解約はいつでも無料・8日目から自動課金</p>
 </div></section>
 
@@ -132,6 +146,7 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
   <h2><span class="bar"></span>勤怠・給与に、お金をかけすぎていませんか？</h2>
   <p class="sub">一般的なシステムは「1人あたり月額」。人数が増えるほど料金も上がります。Z勤怠は<b>会社単位の定額</b>。しかも勤怠と給与計算が1つにまとまり、受付端末は何台でも無制限です。</p>
   <div class="cmp-wrap"><table class="cmp">
+    <colgroup><col style="width:15%"><col style="width:30%"><col style="width:30%"><col style="width:25%"></colgroup>
     <thead><tr><th>従業員数</th><th>一般的な勤怠＋給与システム<br><span class="cmp-note">1人あたり課金が主流</span></th><th class="zk">Z勤怠<br><span class="cmp-note">会社単位の定額</span></th><th>差額の目安</th></tr></thead>
     <tbody>
       <tr><td><b>10名</b></td><td class="comp-price">月 3,000〜5,000円〜</td><td class="zk-price">月 1,000円</td><td class="save">毎月 約2,000〜4,000円お得</td></tr>
@@ -166,8 +181,8 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 <section class="sec" id="security"><div class="wrap">
   <h2><span class="bar"></span>安心して任せられる設計</h2>
   <p class="sub">給与は会社で最も重い個人情報。守り方を「アプリの作法」ではなく「データベースの強制力」で実装しています。</p>
-  <table>
-    <tr><th style="width:240px">完全なテナント分離</th><td>各社のデータはPostgreSQLの行レベルセキュリティ（RLS）で分離。<b>他社のデータには技術的に到達できません</b>。</td></tr>
+  <table class="info">
+    <tr><th>完全なテナント分離</th><td>各社のデータはPostgreSQLの行レベルセキュリティ（RLS）で分離。<b>他社のデータには技術的に到達できません</b>。</td></tr>
     <tr><th>受付端末に給与を置かない</th><td>受付iPadが持てるのは「氏名と社員コード」だけ。万一の紛失・盗難でも、給与・住所・生年月日はその端末に存在しません。</td></tr>
     <tr><th>カード情報を保持しない</th><td>決済はStripeの安全なページで完結し、カード番号が当サービスに保存されることはありません。</td></tr>
     <tr><th>支払い済み給与の保全</th><td>「確定」した給与はデータベース側のトリガーが上書きを拒否。事後の改ざん・事故を防ぎます。</td></tr>
