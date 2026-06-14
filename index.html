@@ -50,9 +50,10 @@ h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
 .price{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:900px){.price{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:520px){.price{grid-template-columns:1fr;gap:8px}
-  .pl{padding:12px 16px}
+  .pl{padding:8px 16px}
+  .pl .pn{font-size:12px}
   .pl .pr{font-size:24px}
-  .pl .cap{margin:1px 0 5px}
+  .pl .cap{margin:0 0 3px}
   .pl ul{margin:7px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 14px}
   .pl li{margin-bottom:0}}
 .pl{border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center}
@@ -65,7 +66,7 @@ h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
 .pl li{padding-left:18px;position:relative;margin-bottom:4px}
 .pl li::before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;background:var(--green);border-radius:1px}
 .pbadge{display:inline-block;background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:var(--r);margin-bottom:8px}
-.all-inc{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);padding:11px 14px;font-size:14px;font-weight:600;color:var(--ink);margin:6px 0 0;line-height:1.7}
+.all-inc{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);padding:11px 14px;font-size:14px;font-weight:600;color:var(--ink);margin:6px 0 14px;line-height:1.7}
 .all-inc b{color:var(--green);font-weight:900}
 
 .steps{counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -97,13 +98,13 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 .cmp{font-size:14px;margin:8px 0 0;table-layout:fixed;width:100%}
 .cmp th,.cmp td{text-align:center;padding:12px 10px;border:1px solid var(--line);background:#fff}
 .cmp thead th{background:var(--chip);font-size:13px;vertical-align:middle}
-.cmp .cmp-note{font-weight:400;font-size:11px;color:var(--mut)}
+.cmp .cmp-note{font-weight:400;font-size:10px;color:var(--mut)}
 .cmp th.zk{background:var(--green);color:#fff}
 .cmp th.zk .cmp-note{color:#CFE0D7}
 .cmp td.zk-price{background:var(--green);color:#fff;font-weight:900;font-size:18px}
 .cmp .comp-price{color:var(--mut)}
 .cmp .save{color:var(--green);font-weight:700;font-size:12.5px}
-@media(max-width:600px){.cmp th,.cmp td{padding:9px 7px;font-size:12px}.cmp td.zk-price{font-size:15px}.cmp .save{font-size:11px}}
+@media(max-width:600px){.cmp th,.cmp td{padding:9px 7px;font-size:12px}.cmp td.zk-price{font-size:15px}.cmp .save{font-size:11px}.cmp .cmp-note{font-size:8.5px}}
 /* ===== モバイル（スマホ幅）ヘッダー・ヒーロー調整 ===== */
 @media(max-width:640px){
   /* ヘッダーはロゴ＋会社名＋申込ボタンだけにして、折り返し・はみ出しを防ぐ */
