@@ -2,6 +2,21 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script>
+/* セキュアコンテキスト確保（crypto.subtle等はHTTPS必須）＋ 更新の確実な反映 */
+(function(){
+  try{
+    var h=location.hostname;
+    if(location.protocol==='http:'&&h!=='localhost'&&h!=='127.0.0.1'&&h.indexOf('.')>-1&&!/^(10|127|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h)){
+      location.replace('https://'+location.host+location.pathname+location.search+location.hash);
+      return;
+    }
+  }catch(e){}
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+  }
+})();
+</script>
 <meta name="color-scheme" content="light only">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1F5132">
