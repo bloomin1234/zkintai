@@ -37,7 +37,10 @@ header{position:sticky;top:0;z-index:40;background:var(--paper);border-bottom:1p
   font-weight:900;font-size:18px;border-radius:var(--r);flex:none}
 .h-title{font-weight:700;font-size:15px;letter-spacing:.02em}
 .h-sub{font-size:11px;color:var(--mut);margin-top:-2px}
-.h-right{margin-left:auto;font-size:12px;color:var(--mut)}
+.h-right{margin-left:auto;font-size:12px;color:var(--mut);display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.hdr-out{font-size:11px;font-weight:700;color:var(--mut);background:var(--paper);border:1px solid var(--line);border-radius:2px;padding:3px 11px;cursor:pointer;white-space:nowrap}
+.hdr-out:hover{border-color:var(--green);color:var(--green)}
+.plan-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 0}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--paper);border-top:1px solid var(--line);
   display:grid;grid-template-columns:repeat(8,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;font-size:10px;color:var(--mut);font-weight:500}
@@ -70,8 +73,17 @@ h3{font-size:13.5px;font-weight:700;margin:0 0 8px}
 .btn.pri{background:var(--green);border-color:var(--green);color:#fff}
 .btn.ghost{border-color:var(--line);color:var(--ink)}
 .btn.danger{border-color:var(--red);color:var(--red)}
+.btn.gray{background:var(--chip);border-color:var(--line);color:var(--ink)}
 .btn.sm{padding:5px 10px;font-size:12px;font-weight:500}
 .btn:disabled{opacity:.4;cursor:default}
+/* 給与ツールバー：2026年6月＋一括計算（1段目）／4ボタン横並び（2段目）・全て同じ高さ */
+.pay-tools{margin-bottom:12px}
+.pay-r1{display:flex;gap:8px;margin-bottom:8px}
+.pay-r1 .in{flex:0 0 auto;width:150px}
+.pay-r1 .btn{flex:1}
+.pay-r2{display:flex;gap:6px}
+.pay-r2 .btn{flex:1;min-width:0;font-size:12px;padding-left:4px;padding-right:4px}
+.pay-tools .in,.pay-tools .btn{height:40px;box-sizing:border-box;padding-top:0;padding-bottom:0}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
 .toolbar .sp{flex:1}
 .field{margin-bottom:10px}
@@ -113,6 +125,9 @@ table.kv td{white-space:normal;word-break:break-word}
 .tbl-in{width:74px;border:1px solid var(--line);border-radius:var(--r);padding:5px 6px;font-size:13px;background:var(--paper)}
 .tbl-in:focus{outline:2px solid var(--green);outline-offset:-1px}
 select.tbl-in{width:auto;min-width:88px}
+.fld{-webkit-appearance:none;appearance:none;border:1px solid var(--line);border-radius:2px;background:var(--paper);color:var(--ink);padding:8px 10px;font-size:13px;max-width:100%}
+select.fld{padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236B6962' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.fld:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
 
 /* ---------- モーダル ---------- */
 .modal-bg{position:fixed;inset:0;background:rgba(10,10,10,.45);z-index:60;display:none;align-items:flex-end;justify-content:center}
@@ -228,6 +243,12 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
   .tag{font-size:10px;padding:1px 6px}
   nav button{font-size:9px;gap:1px}
   h2{font-size:17px}
+  .wiz-pills{display:grid;grid-template-columns:repeat(3,1fr)}  /* 3つずつ＝甲欄が2行目・乙の左に */
+  .wiz-pill{justify-content:center;padding:6px 4px}
+  .plan-actions{flex-direction:column;align-items:stretch}      /* 契約ボタンを縦・全幅に */
+  .plan-actions .btn{width:100%}
+  .pay-r2 .btn{font-size:11px}                                   /* 4ボタンを1行に収める */
+  .pay-r1 .in{width:128px}
 }
 @media(max-width:380px){
   th,td{padding:6px 6px;font-size:11.5px}
@@ -258,7 +279,10 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
     <div class="h-title">Z勤怠<span style="font-weight:400;color:var(--mut)">｜勤怠・給与計算</span></div>
     <div class="h-sub" id="h-company">会社名未設定</div>
   </div>
-  <div class="h-right num" id="h-date"></div>
+  <div class="h-right">
+    <div class="num" id="h-date"></div>
+    <button id="btn-cloud-logout" class="hdr-out" style="display:none">ログアウト</button>
+  </div>
 </header>
 
 <nav id="nav">
@@ -341,8 +365,8 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
       <span class="sp"></span>
       <button class="btn ghost sm" id="btn-emp-csv-out">CSV出力</button>
       <button class="btn ghost sm" id="btn-emp-csv-in">Excel / CSV取込</button>
-      <button class="btn ghost sm" id="btn-qr-print">QRカード印刷</button>
-      <button class="btn pri" id="btn-emp-new">＋ 新規登録</button>
+      <button class="btn gray sm" id="btn-qr-print">QRカード印刷</button>
+      <button class="btn pri sm" id="btn-emp-new">＋ 新規登録</button>
       <input type="file" id="emp-file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">
     </div>
     <div class="tbl-wrap"><table id="emp-tbl">
@@ -367,14 +391,17 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
   <!-- ============ 給与 ============ -->
   <section class="view" id="v-pay">
     <h2><span class="bar"></span>給与計算</h2>
-    <div class="toolbar">
-      <input type="month" class="in" id="pay-month" style="max-width:160px">
-      <button class="btn pri" id="btn-pay-calc">一括計算</button>
-      <button class="btn ghost sm" id="btn-pay-vmode">グリッド表示</button>
-      <span class="sp"></span>
-      <button class="btn ghost sm" id="btn-pay-csv">CSV出力</button>
-      <button class="btn ghost sm" id="btn-pay-print">全明細印刷</button>
-      <button class="btn ghost sm" id="btn-pay-mailall">全員へメール送信</button>
+    <div class="pay-tools">
+      <div class="pay-r1">
+        <input type="month" class="in fld" id="pay-month">
+        <button class="btn pri" id="btn-pay-calc">一括計算</button>
+      </div>
+      <div class="pay-r2">
+        <button class="btn ghost" id="btn-pay-vmode">グリッド表示</button>
+        <button class="btn ghost" id="btn-pay-csv">CSV出力</button>
+        <button class="btn ghost" id="btn-pay-print">全明細印刷</button>
+        <button class="btn ghost" id="btn-pay-mailall">全員へメール送信</button>
+      </div>
     </div>
     <div id="pay-alerts"></div>
     <div id="pay-body"><div class="empty">対象月を選んで「一括計算」を押してください。<br>勤怠データと従業員マスタから自動計算します。</div></div>
@@ -933,6 +960,7 @@ function show(view) {
   $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + view));
   if (view !== 'punch') stopScan();
+  const _lo = $('#btn-cloud-logout'); if (_lo) _lo.style.display = (!KIOSK && S.cloudSync && S.cloudSync.companyId) ? '' : 'none';
   renderers[view] && renderers[view]();
 }
 $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
@@ -1540,10 +1568,10 @@ async function attGridHTML(ym, empId) {
     const c = calcDay(r, SS);
     rows += `<tr data-date="${date}" ${wd === 0 ? 'style="background:#FBF3F2"' : wd === 6 ? 'style="background:#F2F5FA"' : ''}>
       <td class="num" style="white-space:nowrap">${d}<span class="note">（${WD[wd]}）</span></td>
-      <td><select class="in" data-f="dayType" style="padding:6px;min-width:84px">${DAYTYPES.map(([v, l]) => `<option value="${v}" ${r.dayType === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
-      <td><input class="in num" type="time" data-f="in" value="${r.in || ''}" style="padding:6px;width:104px"></td>
-      <td><input class="in num" type="time" data-f="out" value="${r.out || ''}" style="padding:6px;width:104px"></td>
-      <td><input class="in num" type="number" data-f="breakMin" value="${r.breakMin || ''}" min="0" step="5" placeholder="0" style="padding:6px;width:72px"></td>
+      <td><select class="in" data-f="dayType" style="padding:5px 2px;min-width:60px">${DAYTYPES.map(([v, l]) => `<option value="${v}" ${r.dayType === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td><input class="in num" type="time" data-f="in" value="${r.in || ''}" style="padding:5px 2px;width:70px"></td>
+      <td><input class="in num" type="time" data-f="out" value="${r.out || ''}" style="padding:5px 2px;width:70px"></td>
+      <td><input class="in num" type="number" data-f="breakMin" value="${r.breakMin || ''}" min="0" step="5" placeholder="0" style="padding:5px 2px;width:52px"></td>
       <td class="num">${c.workMin ? fmtHM(c.workMin) : '－'}</td>
       <td class="num" ${c.otMin ? 'style="color:var(--ochre);font-weight:700"' : ''}>${c.otMin ? fmtHM(c.otMin) : '－'}</td>
     </tr>`;
@@ -2118,12 +2146,9 @@ renderers.plan = function () {
       <tr><th>現在のプラン</th><td><b>${esc(CSx().planName || '判定前（同期すると確定）')}</b>${CSx().planPrice ? `　月額 ${fmtNum(CSx().planPrice)}円（税別）` : ''}<br><span class="note">在職 ${typeof activeCount === 'function' ? activeCount() : '-'} 名</span></td></tr>
       <tr><th>お支払い状況</th><td>${statusHtml}</td></tr>
     </table></div>
-    <div class="toolbar">
+    <div class="plan-actions">
       ${billBtn}
-      <button class="btn ghost sm" id="btn-cloud-sync">今すぐ同期</button>
       <button class="btn ghost sm" id="btn-cloud-kiosk">受付端末セットアップURLを発行</button>
-      <span class="sp"></span>
-      <button class="btn ghost sm" id="btn-cloud-logout">ログアウト</button>
     </div>
     <p class="note" style="margin-top:6px">${hasSub ? '解約は「解約・お支払いの管理」からいつでも可能です。<b>無料お試し期間（7日）内に解約すれば料金はかかりません。</b>' : 'カード登録すると7日間の無料お試しが始まり、<b>8日目から自動で課金</b>されます（期間内の解約は無料）。'}カード番号はStripeの安全なページで入力し、当サービスには保存されません。最終同期：${CSx().lastAt ? new Date(CSx().lastAt).toLocaleString('ja-JP') : 'まだ'}</p>
   </div>
@@ -2189,9 +2214,9 @@ renderers.calc = function () {
     <h3>料率・税表の適用期間 <span class="tag g">月別に自動適用</span></h3>
     <p class="note" style="margin-bottom:10px">給与は「<b>その月に有効なセット</b>」で自動計算します。改定があったら、新しい開始月のセットを追加して数値を直すだけ。<b>過去の月の計算には影響しません</b>（例：5月から改定 → 4月分はいつ再計算しても4月のセットを使用）。</p>
     <div class="toolbar" style="margin-bottom:6px">
-      <select id="rs-sel" style="min-width:200px">${S.rateHistory.map(r => `<option value="${r.effectiveFrom}" ${r.effectiveFrom === RS_SEL ? 'selected' : ''}>${rsRangeLabel(r)}</option>`).join('')}</select>
+      <select id="rs-sel" class="fld" style="min-width:180px">${S.rateHistory.map(r => `<option value="${r.effectiveFrom}" ${r.effectiveFrom === RS_SEL ? 'selected' : ''}>${rsRangeLabel(r)}</option>`).join('')}</select>
       <span class="sp"></span>
-      <input type="month" id="rs-new" style="width:150px">
+      <input type="month" id="rs-new" class="fld" style="width:150px">
       <button class="btn ghost sm" id="btn-rs-add">この月から新セット追加</button>
       <button class="btn ghost sm" id="btn-rs-del" ${S.rateHistory.length < 2 ? 'disabled' : ''}>選択中を削除</button>
       <button class="btn pri sm" id="btn-rates-fetch">最新の料率・税表を取得</button>
