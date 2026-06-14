@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light only">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Z勤怠｜勤怠・給与にお金をかけない。QR打刻＋自動給与計算で会社単位の定額・月1,000円から</title>
+<meta name="description" content="QR打刻・自動給与計算・PDF明細メール。中小企業のための勤怠給与クラウド。1人あたり課金ではなく会社単位の定額だから、一般的なシステムの半額以下になることも。10名まで月額1,000円、7日間無料。">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --ink:#0A0A0A; --green:#1F5132; --green-bg:#EDF3EF; --ochre:#9A6B1F;
+  --red:#D7261E; --paper:#FFF; --bg:#FFF; --chip:#F0EEE9; --line:#E3E0DA; --mut:#6B6962; --r:2px}
+html{background:#fff;color-scheme:light;scroll-behavior:smooth}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Sans JP",-apple-system,sans-serif;color:var(--ink);background:var(--bg);
+  line-height:1.85;font-size:15px;font-feature-settings:"palt"}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+header{position:sticky;top:0;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);z-index:10}
+.hd{display:flex;align-items:center;gap:10px;padding:13px 0}
+.logo{width:30px;height:30px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:var(--r)}
+.brand{font-weight:900;font-size:15px}.brand span{font-weight:400;color:var(--mut);font-size:12px}
+.sp{flex:1}
+.nav a{font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;margin-left:18px}
+.cta{display:inline-block;background:var(--green);color:#fff!important;padding:8px 20px;border-radius:var(--r);font-weight:700;text-decoration:none}
+.cta.big{font-size:16px;padding:14px 36px}
+.cta.ghost{background:#fff;color:var(--ink)!important;border:1px solid var(--line)}
+
+.hero{padding:72px 0 56px;border-bottom:1px solid var(--line)}
+.hero .tag{display:inline-block;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:700;padding:3px 12px;border-radius:var(--r);margin-bottom:16px}
+h1{font-size:38px;font-weight:900;line-height:1.5;letter-spacing:.01em}
+h1 .g{color:var(--green)}
+.lead{font-size:16px;color:var(--mut);margin:16px 0 28px;max-width:640px}
+.hero .note{font-size:12px;color:var(--mut);margin-top:12px}
+
+h2{font-size:24px;font-weight:900;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2 .bar{width:6px;height:24px;background:var(--green);border-radius:var(--r)}
+.sec{padding:60px 0;border-bottom:1px solid var(--line)}
+.sec .sub{color:var(--mut);font-size:13.5px;margin-bottom:26px}
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.feats{grid-template-columns:1fr}h1{font-size:28px}}
+.feat{border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.feat .ic{width:40px;height:40px;background:var(--green);border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.feat b{display:block;font-size:15px;margin-bottom:4px}
+.feat p{font-size:13px;color:var(--mut)}
+
+.price{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:900px){.price{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.price{grid-template-columns:1fr}}
+.pl{border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center}
+.pl.hot{border:2px solid var(--green)}
+.pl .pn{font-size:13px;font-weight:700;color:var(--mut)}
+.pl .cap{font-size:14px;font-weight:900;margin:2px 0 10px}
+.pl .pr{font-size:32px;font-weight:900}
+.pl .pr small{font-size:13px;font-weight:700;color:var(--mut)}
+.pl ul{list-style:none;margin:14px 0 0;text-align:left;font-size:12.5px;color:var(--mut)}
+.pl li{padding-left:18px;position:relative;margin-bottom:4px}
+.pl li::before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;background:var(--green);border-radius:1px}
+.pbadge{display:inline-block;background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:var(--r);margin-bottom:8px}
+
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+.st{border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.st::before{counter-increment:s;content:counter(s);display:flex;width:30px;height:30px;background:var(--green);color:#fff;
+  font-weight:900;align-items:center;justify-content:center;border-radius:var(--r);margin-bottom:10px}
+.st b{display:block;font-size:14px;margin-bottom:2px}
+.st p{font-size:12.5px;color:var(--mut)}
+
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+th{background:var(--chip);text-align:left;padding:9px 12px;border:1px solid var(--line)}
+td{padding:8px 12px;border:1px solid var(--line)}
+.faq dt{font-weight:900;margin-top:18px}
+.faq dt::before{content:'Q．';color:var(--green)}
+.faq dd{color:var(--mut);font-size:13.5px;margin-top:2px}
+.faq dd::before{content:'A．';color:var(--ink);font-weight:700}
+.fin{padding:70px 0;text-align:center}
+footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
+.notice{font-size:11.5px;color:var(--mut)}
+
+.compare{background:var(--green-bg)}
+.cmp-wrap{overflow-x:auto}
+.cmp{font-size:14px;margin:8px 0 0}
+.cmp th,.cmp td{text-align:center;padding:12px 10px;border:1px solid var(--line);background:#fff}
+.cmp thead th{background:var(--chip);font-size:13px;vertical-align:middle}
+.cmp .cmp-note{font-weight:400;font-size:11px;color:var(--mut)}
+.cmp th.zk{background:var(--green);color:#fff}
+.cmp th.zk .cmp-note{color:#CFE0D7}
+.cmp td.zk-price{background:var(--green);color:#fff;font-weight:900;font-size:18px}
+.cmp .comp-price{color:var(--mut)}
+.cmp .save{color:var(--green);font-weight:700;font-size:12.5px}
+@media(max-width:600px){.cmp th,.cmp td{padding:9px 7px;font-size:12px}.cmp td.zk-price{font-size:15px}.cmp .save{font-size:11px}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap hd">
+  <div class="logo">Z</div>
+  <div class="brand">Z勤怠 <span>｜勤怠・給与計算クラウド</span></div>
+  <span class="sp"></span>
+  <nav class="nav">
+    <a href="#compare">料金比較</a><a href="#features">機能</a><a href="#security">安心設計</a><a href="#price">料金</a>
+    <a class="cta" href="./Z勤怠_勤怠給与システム.html">無料で始める</a>
+  </nav>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <span class="tag">中小企業のための勤怠・給与クラウド</span>
+  <h1>勤怠管理や給与計算に、<span class="g">時間とお金</span>を<br>かけるのは、もうやめませんか。</h1>
+  <p class="lead">QRをかざすだけで打刻。ボタン1回で残業・社会保険・源泉所得税まで自動計算し、給与明細PDFを全員へメール。しかも料金は<b>「1人あたり」ではなく会社単位の定額</b>。人数が増えても増えにくく、一般的なシステムの<b>半額以下</b>になることもあります。</p>
+  <a class="cta big" href="./Z勤怠_勤怠給与システム.html">7日間無料で始める</a>
+  <a class="cta big ghost" href="#compare" style="margin-left:10px">料金を比べる</a>
+  <p class="note">登録時にカード登録 → 7日間無料 ／ 期間内の解約はいつでも無料・8日目から自動課金</p>
+</div></section>
+
+<section class="sec compare" id="compare"><div class="wrap">
+  <h2><span class="bar"></span>勤怠・給与に、お金をかけすぎていませんか？</h2>
+  <p class="sub">一般的なシステムは「1人あたり月額」。人数が増えるほど料金も上がります。Z勤怠は<b>会社単位の定額</b>。しかも勤怠と給与計算が1つにまとまり、受付端末は何台でも無制限です。</p>
+  <div class="cmp-wrap"><table class="cmp">
+    <thead><tr><th>従業員数</th><th>一般的な勤怠＋給与システム<br><span class="cmp-note">1人あたり課金が主流</span></th><th class="zk">Z勤怠<br><span class="cmp-note">会社単位の定額</span></th><th>差額の目安</th></tr></thead>
+    <tbody>
+      <tr><td><b>10名</b></td><td class="comp-price">月 3,000〜5,000円〜</td><td class="zk-price">月 1,000円</td><td class="save">毎月 約2,000〜4,000円お得</td></tr>
+      <tr><td><b>30名</b></td><td class="comp-price">月 9,000〜15,000円〜</td><td class="zk-price">月 3,000円</td><td class="save">毎月 約6,000〜12,000円お得</td></tr>
+      <tr><td><b>50名</b></td><td class="comp-price">月 15,000〜25,000円〜</td><td class="zk-price">月 5,000円</td><td class="save">毎月 約10,000〜20,000円お得</td></tr>
+      <tr><td><b>100名</b></td><td class="comp-price">月 30,000〜50,000円〜</td><td class="zk-price">月 9,000円</td><td class="save">毎月 約21,000〜41,000円お得</td></tr>
+    </tbody>
+  </table></div>
+  <p class="notice">※ 一般的な人数課金型（1人あたり月300〜500円程度）の相場をもとにした概算です。実際の金額・機能は各社により異なります。勤怠と給与計算を別々のサービスで契約すると、さらに費用がかかる場合があります。Z勤怠は1つで勤怠・給与計算・明細メールまでカバーします。</p>
+  <div style="text-align:center;margin-top:14px"><a class="cta big" href="./Z勤怠_勤怠給与システム.html">7日間無料で試す</a></div>
+</div></section>
+
+<section class="sec" id="features"><div class="wrap">
+  <h2><span class="bar"></span>主な機能</h2>
+  <p class="sub">「導入したその日」から運用できることを最優先に設計しています。</p>
+  <div class="feats">
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M3 3h7v7H3zM5 5v3h3V5zM14 3h7v7h-7zM16 5v3h3V5zM3 14h7v7H3zM5 16v3h3V16zM14 14h3v3h-3zM18 18h3v3h-3zM14 18h3v3h-3zM18 14h3v3h-3z"/></svg></div>
+      <b>QR打刻（受付端末＋マイQR）</b><p>受付のiPadに専用画面を表示。従業員はスマホの「マイQR」か印刷カードをかざすだけ。電波が切れても打刻は止まらず、復帰後に自動送信されます。</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 9.5L12 13l3.5-3.5M12 13v5M9.5 15.5h5"/></svg></div>
+      <b>給与の自動計算</b><p>残業・深夜・休日の割増、健康保険・厚生年金・雇用保険、源泉所得税（国税庁の電子計算機特例）まで自動。Excelのようなグリッドで全項目を一覧確認できます。</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h11l5 5v11H4z"/><path d="M15 4v5h5M8 14h8M8 17h5"/></svg></div>
+      <b>明細はPDFで自動メール</b><p>「一括メール送信」を押すだけで、全員に給与明細PDFが届きます。印刷・封入・手渡しの作業がなくなります。</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="17"/><path d="M3 9h18M8 2v4M16 2v4M7 13h4v4H7z"/></svg></div>
+      <b>法改正に「ボタンひとつ」</b><p>毎年の料率・税額表の改定は、配信される最新セットをボタンで取得するだけ。適用期間方式なので、<b>過去の月の給与計算には影響しません</b>。<span class="notice">※適用前に必ず公式情報（国税庁・協会けんぽ・日本年金機構）と照合のうえご確認ください。</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><path d="M4 20V10l8-6 8 6v10"/><path d="M9 20v-6h6v6"/></svg></div>
+      <b>Excelで一括導入</b><p>従業員名簿はテンプレートExcelを投げ込むだけ。氏名と生年月日が同じ人がいると「重複の疑い」と警告し、二重登録を防ぎます。</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5M16 4.5a3.5 3.5 0 010 7M21 20c0-2.8-1.7-4.6-4-5.2"/></svg></div>
+      <b>監査に強い記録</b><p>打刻の生ログは追記専用で改ざん不可。明細には「どの料率セットで計算したか」が記録され、確定済みの給与はDBレベルで上書きを拒否します。</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="security"><div class="wrap">
+  <h2><span class="bar"></span>安心して任せられる設計</h2>
+  <p class="sub">給与は会社で最も重い個人情報。守り方を「アプリの作法」ではなく「データベースの強制力」で実装しています。</p>
+  <table>
+    <tr><th style="width:240px">完全なテナント分離</th><td>各社のデータはPostgreSQLの行レベルセキュリティ（RLS）で分離。<b>他社のデータには技術的に到達できません</b>。</td></tr>
+    <tr><th>受付端末に給与を置かない</th><td>受付iPadが持てるのは「氏名と社員コード」だけ。万一の紛失・盗難でも、給与・住所・生年月日はその端末に存在しません。</td></tr>
+    <tr><th>カード情報を保持しない</th><td>決済はStripeの安全なページで完結し、カード番号が当サービスに保存されることはありません。</td></tr>
+    <tr><th>支払い済み給与の保全</th><td>「確定」した給与はデータベース側のトリガーが上書きを拒否。事後の改ざん・事故を防ぎます。</td></tr>
+  </table>
+</div></section>
+
+<section class="sec" id="price"><div class="wrap">
+  <h2><span class="bar"></span>料金プラン</h2>
+  <p class="sub">従業員数で自動判定されるシンプルな月額制。すべてのプランで全機能が使えます。お支払いはクレジットカード（Stripe）。</p>
+  <div class="price">
+    <div class="pl"><div class="pn">STARTER</div><div class="cap">従業員10名まで</div>
+      <div class="pr num">¥1,000<small>／月（税別）</small></div>
+      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+    <div class="pl"><div class="pn">BASIC</div><div class="cap">従業員30名まで</div>
+      <div class="pr num">¥3,000<small>／月（税別）</small></div>
+      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+    <div class="pl hot"><span class="pbadge">人気</span><div class="pn">GROWTH</div><div class="cap">従業員50名まで</div>
+      <div class="pr num">¥5,000<small>／月（税別）</small></div>
+      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+    <div class="pl"><div class="pn">ENTERPRISE</div><div class="cap">従業員100名まで</div>
+      <div class="pr num">¥9,000<small>／月（税別）</small></div>
+      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>7日間無料</li></ul></div>
+    <div class="pl"><div class="pn">PRO</div><div class="cap">従業員100名超</div>
+      <div class="pr num">¥15,000<small>／月（税別）</small></div>
+      <ul><li>全機能利用可</li><li>受付端末 無制限</li><li>導入サポート</li></ul></div>
+  </div>
+  <p class="notice" style="margin-top:12px">※従業員数は「在職」登録者数で毎月自動判定されます。登録時にカードを登録 → <b>7日間無料</b>、8日目から自動課金。解約はアプリ内「契約」タブからいつでも可能で、<b>無料期間内の解約は料金がかかりません</b>。</p>
+</div></section>
+
+<section class="sec" id="flow"><div class="wrap">
+  <h2><span class="bar"></span>導入の流れ — 最短30分</h2>
+  <p class="sub">専用機器・サーバー・ITの知識は不要です。</p>
+  <div class="steps">
+    <div class="st"><b>登録＋カード登録</b><p>会社名・メール・パスワードを入力 → カード登録で7日間無料スタート。期間内の解約は無料です。</p></div>
+    <div class="st"><b>名簿をExcelで取込</b><p>テンプレートに記入して投げ込むだけ。二重登録は自動でブロック。</p></div>
+    <div class="st"><b>受付iPadを開通</b><p>発行されるURLを受付の端末で一度開くだけ。QRカード印刷・スマホのマイQR配布もワンクリック。</p></div>
+    <div class="st"><b>月末に一括計算</b><p>ボタン1回で全員の給与を計算し、明細PDFを一括メール。Excel風グリッドで確認も簡単。</p></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap faq">
+  <h2><span class="bar"></span>よくあるご質問</h2>
+  <dl>
+    <dt>タイムカードや打刻機の購入は必要ですか？</dt>
+    <dd>不要です。お手元のiPad・PC・スマートフォンのブラウザだけで動きます。</dd>
+    <dt>給与計算は本当に合っていますか？</dt>
+    <dd>源泉所得税は国税庁「電子計算機等で計算する場合の特例」を実装し、公表例29件との一致検算を継続実施しています。社会保険料率は最新セットを配信しますが、<b>適用の際は必ず公式発表と照合のうえ、貴社の責任でご確認ください</b>。</dd>
+    <dt>途中で従業員が増えたら？</dt>
+    <dd>プランは在職人数で自動判定され、翌請求から該当プランの料金になります。手続きは不要です。</dd>
+    <dt>解約はいつでもできますか？</dt>
+    <dd>はい。「契約」タブの「解約・お支払いの管理」からいつでも解約できます。<b>7日間の無料期間内に解約すれば料金はかかりません</b>。データはバックアップ（JSON/CSV/Excel）として書き出せます。</dd>
+  </dl>
+</div></section>
+
+<section class="fin"><div class="wrap">
+  <h2 style="justify-content:center"><span class="bar"></span>今日の打刻から、変えられます。</h2>
+  <p class="sub" style="margin:8px 0 22px">登録時にカード登録 → <b>7日間無料</b>。期間内に解約すれば料金はかかりません。すべての機能をお試しいただけます。</p>
+  <a class="cta big" href="./Z勤怠_勤怠給与システム.html">無料で始める</a>
+</div></section>
+
+<footer><div class="wrap">
+  Z勤怠｜運営：Bloomin Digital and Strategy Co., Ltd.<br>
+  <span class="notice">表示価格はすべて税別です。本サービスの計算結果・配信される料率や税額表は、適用前に必ず国税庁・協会けんぽ・日本年金機構等の公式情報と照合のうえ、利用企業の責任でご確認ください。決済処理はStripe, Inc.のシステムを利用しています。</span>
+</div></footer>
+
+</body>
+</html>
