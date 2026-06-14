@@ -93,12 +93,16 @@ h3{font-size:13.5px;font-weight:700;margin:0 0 8px}
 .field input:focus,.field select:focus,.field textarea:focus,.in:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
-.grid3 .field label{min-height:2.8em}                       /* ラベルを2行ぶん確保＝入力欄の高さを揃える */
+.grid-pay{display:grid;grid-template-columns:1fr 1.45fr;gap:0 12px}      /* 給与規定：左を狭く右を広く＝長いラベルを1行に */
+.grid3 .field label,.grid-pay .field label{font-size:11px;line-height:1.35}  /* 詰めたグリッドはラベルを少し小さく＝1行に収める */
 .grid3 .field.wide,.grid2 .field.wide{grid-column:1/-1}     /* 横長フィールド（料率ラベル等） */
 .field .req{background:#FBEAEA}                              /* 必須入力欄を薄い赤で示す */
+.rs-hint{font-size:11px;color:var(--mut);margin:5px 0 0;line-height:1.5}
 .rs-block{margin-bottom:12px}
 .rs-lbl{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:5px;line-height:1.55}
 .rs-row{display:flex;gap:8px;align-items:center}
+.rs-row>*{height:40px;box-sizing:border-box}          /* 入力・ボタンを同じ高さに＝空欄でもガタガタしない */
+.rs-row .btn{padding-top:0;padding-bottom:0}
 .rs-row .fld{flex:1;min-width:0}
 .rs-row .btn{flex:0 0 auto;white-space:nowrap}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
@@ -243,6 +247,7 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
 @media(max-width:560px){
   .grid2{grid-template-columns:1fr}            /* 2列フォームを1列に＝ラベル段差の崩れを解消 */
   .grid3{grid-template-columns:1fr 1fr}
+  .grid-pay{grid-template-columns:0.68fr 1.32fr}  /* 給与規定：左を狭く＝右の長いラベルを1行に */
   main{padding:14px 12px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom))}
   th,td{padding:6px 6px;font-size:11.5px}      /* 表を詰めて1画面に収まりやすく */
   table{font-size:11.5px}
@@ -2207,7 +2212,7 @@ renderers.calc = function () {
     `
   <div class="card">
     <h3>給与規定</h3>
-    <div class="grid3">
+    <div class="grid-pay">
       <div class="field"><label>締め日（31=月末）</label>${numIn('payroll.closingDay', S.payroll.closingDay, 90, 1)}</div>
       <div class="field"><label>支給日</label>${numIn('payroll.payDay', S.payroll.payDay, 90, 1)}</div>
       <div class="field"><label>支給月</label><select data-p="payroll.payNextMonth"><option value="true" ${S.payroll.payNextMonth ? 'selected' : ''}>翌月払い</option><option value="false" ${!S.payroll.payNextMonth ? 'selected' : ''}>当月払い</option></select></div>
@@ -2220,24 +2225,25 @@ renderers.calc = function () {
     `
   <div class="card">
     <h3>料率・税表の適用期間 <span class="tag g">月別に自動適用</span></h3>
-    <p class="note" style="margin-bottom:12px">給与は「<b>その月に有効なセット</b>」で自動計算します。料率や税額が改定されたら、<b>改定が始まる月のセットを新しく追加</b>して数値を直すだけ。<b>過去の月の計算には影響しません</b>（例：5月から改定 → 4月分はいつ再計算しても4月のセットを使用）。</p>
+    <p class="note" style="margin-bottom:14px">料率や税額が変わったら、<b>変わる月を「追加」して数字を直す</b>だけ。<b>前の月の給与は変わりません。</b></p>
     <div class="rs-block">
-      <label class="rs-lbl">① いま編集している期間（下の「料率」「割増率」「源泉所得税」はこの期間の内容です）</label>
+      <div class="rs-lbl">① 編集する期間</div>
       <div class="rs-row">
         <select id="rs-sel" class="fld">${S.rateHistory.map(r => `<option value="${r.effectiveFrom}" ${r.effectiveFrom === RS_SEL ? 'selected' : ''}>${rsRangeLabel(r)}</option>`).join('')}</select>
         <button class="btn ghost sm" id="btn-rs-del" ${S.rateHistory.length < 2 ? 'disabled' : ''}>この期間を削除</button>
       </div>
+      <p class="rs-hint">下の「料率・割増率・源泉所得税」は、この期間の数字です。</p>
     </div>
     <div class="rs-block">
-      <label class="rs-lbl">② 改定があったとき：改定が始まる月を選んで、新しい期間を追加</label>
+      <div class="rs-lbl">② 改定があったら、期間を追加</div>
       <div class="rs-row">
         <input type="month" id="rs-new" class="fld">
         <button class="btn ghost sm" id="btn-rs-add">この月から追加</button>
       </div>
+      <p class="rs-hint">改定が始まる月を選んでください。</p>
     </div>
     <button class="btn pri sm" id="btn-rates-fetch">最新の料率・税表を取得</button>
-    <p class="note" style="margin-top:8px;color:var(--ochre)"><b>ご注意：</b>「最新の料率・税表を取得」で追加される内容は運営が公式情報をもとに作成・配信するものですが、<b>適用前に必ず国税庁・協会けんぽ・日本年金機構の公式発表と照合し、貴社の責任でご確認ください</b>。取得しても過去の月の給与計算には影響しません（適用期間方式）。</p>
-    <p class="note">セットを切り替える前に「設定を保存」してください。</p>
+    <p class="rs-hint" style="color:var(--ochre)">※自動で入る値は目安です。<b>適用前に必ず公式（国税庁・協会けんぽ・年金機構）でご確認ください。</b></p>
   </div>
   `,
     `
