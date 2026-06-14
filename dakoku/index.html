@@ -346,7 +346,7 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
     </div>
     <div class="card" id="home-empty" style="display:none">
       <h3>はじめに</h3>
-      <p class="note" style="margin-bottom:10px">①「設定」で会社名と料率を確認 → ②「従業員」を登録（CSV一括取込も可）→ ③「打刻」でQR運用を開始 → ④ 月末に「給与」で一括計算、の順で使えます。まずは動きを見たい場合はサンプルデータをどうぞ。</p>
+      <p class="note" style="margin-bottom:10px">①「計算設定」で会社名と料率を確認 → ②「従業員」を登録（CSV一括取込も可）→ ③「打刻」でQR運用を開始 → ④ 月末に「給与」で一括計算、の順で使えます。まずは動きを見たい場合はサンプルデータをどうぞ。</p>
       <button class="btn pri" id="btn-seed">サンプルデータを投入</button>
     </div>
   </section>
@@ -1015,7 +1015,7 @@ $('#nav').addEventListener('click', e => { const b = e.target.closest('button');
    ホーム
    ============================================================ */
 renderers.home = async function () {
-  $('#h-company').textContent = S.company.name || '会社名未設定（設定から入力）';
+  $('#h-company').textContent = S.company.name || '会社名未設定（「計算設定」で入力）';
   const act = activeEmps();
   $('#k-emp').textContent = act.length;
   $('#home-empty').style.display = EMP.length ? 'none' : 'block';
@@ -2372,6 +2372,16 @@ renderers.calc = function () {
   const pills = CALC_STEPS.map((s, i) => `<button class="wiz-pill${i === CALC_STEP ? ' on' : ''}${done[s.key] ? ' done' : ''}" data-step="${i}"><span class="wiz-pill-n">${done[s.key] ? '✓' : (i + 1)}</span>${s.short}</button>`).join('');
   $('#calc-body').innerHTML = `
   <div class="card">
+    <h3>会社情報 <span class="tag g">明細・QRカードに表示</span></h3>
+    <div class="grid2">
+      <div class="field"><label>会社名</label><input data-p="company.name" value="${esc(S.company.name)}" placeholder="例：株式会社サンプル"></div>
+      <div class="field"><label>電話番号</label><input data-p="company.tel" value="${esc(S.company.tel)}"></div>
+      <div class="field"><label>住所</label><input data-p="company.address" value="${esc(S.company.address)}"></div>
+      <div class="field"><label>代表メール</label><input data-p="company.email" value="${esc(S.company.email)}"></div>
+    </div>
+    <div class="toolbar" style="margin-top:4px"><span class="sp"></span><button class="btn pri sm" id="btn-co-save">会社情報を保存</button></div>
+  </div>
+  <div class="card">
     <div class="wiz-top"><b>設定の進捗</b><span class="wiz-pct">${doneCount} / ${CALC_STEPS.length} 完了（${pct}%）</span></div>
     <div class="wiz-bar"><div class="wiz-bar-fill" style="width:${pct}%"></div></div>
     <div class="wiz-pills">${pills}</div>
@@ -2389,16 +2399,6 @@ renderers.calc = function () {
 renderers.data = function () {
   $('#data-body').innerHTML = `
   <div class="card">
-    <h3>会社情報</h3>
-    <div class="grid2">
-      <div class="field"><label>会社名（明細・QRカードに表示）</label><input data-p="company.name" value="${esc(S.company.name)}"></div>
-      <div class="field"><label>電話番号</label><input data-p="company.tel" value="${esc(S.company.tel)}"></div>
-      <div class="field"><label>住所</label><input data-p="company.address" value="${esc(S.company.address)}"></div>
-      <div class="field"><label>代表メール</label><input data-p="company.email" value="${esc(S.company.email)}"></div>
-    </div>
-  </div>
-
-  <div class="card">
     <h3>データ管理</h3>
     <p class="note" style="margin-bottom:10px">データはこの端末のブラウザ内（IndexedDB）にのみ保存されます。端末の変更・故障に備えて、定期的にバックアップを保存してください。</p>
     <div class="toolbar">
@@ -2409,10 +2409,6 @@ renderers.data = function () {
       <button class="btn danger sm" id="btn-wipe">全データ削除</button>
       <input type="file" id="restore-file" accept=".json,application/json" style="display:none">
     </div>
-  </div>
-
-  <div style="position:sticky;bottom:calc(var(--nav-h) + 10px);text-align:right;padding:4px 0">
-    <button class="btn pri" id="btn-set-save" style="padding:12px 28px">設定を保存</button>
   </div>`;
 };
 
@@ -2476,6 +2472,13 @@ async function saveCalcInputs() {
   if (id === 'btn-set-save') {
     await saveCalcInputs();
     toast('設定を保存しました。各月の給与は「その月に有効なセット」で計算されます。');
+  }
+  if (id === 'btn-co-save') {
+    await saveCalcInputs();
+    try { await cloudUpdateCompanyName(S.company.name); } catch (e) {}
+    const el = $('#h-company'); if (el) el.textContent = S.company.name || '会社名未設定（「計算設定」で入力）';
+    toast('会社情報を保存しました。');
+    return;
   }
   if (id === 'btn-rs-add') {
     const v = $('#rs-new').value;
@@ -2714,6 +2717,15 @@ async function cloudLogout() {
   await saveTok(null);
   S.cloudSync = {}; await saveSettings();
 }
+/* ---------- 会社名をクラウドにも反映（契約タブ等の表示用。未ログイン時は何もしない） ---------- */
+async function cloudUpdateCompanyName(name) {
+  const cid = CS().companyId;
+  if (!cid || !(await loadTok())) return;
+  await sb(`/rest/v1/companies?id=eq.${cid}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ name: name || '' }) });
+  CS().companyName = name || '';
+}
+window.cloudUpdateCompanyName = cloudUpdateCompanyName;
 /* ---------- パスワード再設定 ---------- */
 // 再設定メールを送る（メール内リンクは現在のページ /kintai/ に戻る）
 async function cloudResetRequest(email) {
