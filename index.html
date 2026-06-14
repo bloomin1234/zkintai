@@ -90,6 +90,21 @@ footer{padding:26px 0 60px;color:var(--mut);font-size:12px}
 .cmp .comp-price{color:var(--mut)}
 .cmp .save{color:var(--green);font-weight:700;font-size:12.5px}
 @media(max-width:600px){.cmp th,.cmp td{padding:9px 7px;font-size:12px}.cmp td.zk-price{font-size:15px}.cmp .save{font-size:11px}}
+/* ===== モバイル（スマホ幅）ヘッダー・ヒーロー調整 ===== */
+@media(max-width:640px){
+  /* ヘッダーはロゴ＋会社名＋申込ボタンだけにして、はみ出し・折り返しを防ぐ */
+  .brand{font-size:16px}
+  .brand span{display:none}
+  .nav a:not(.cta){display:none}
+  .nav a.cta{margin-left:0}
+  header .cta{padding:8px 15px;font-size:13px;white-space:nowrap}
+  .hd{padding:11px 0;gap:9px}
+  /* ヒーローの2つのボタンを縦並びに（横の余白で崩れていたのを解消） */
+  .hero .cta.big{display:block;width:100%;text-align:center;box-sizing:border-box;margin-left:0!important}
+  .hero .cta.big.ghost{margin-top:10px}
+  /* 固定ヘッダーに見出しが隠れないように */
+  section[id]{scroll-margin-top:64px}
+}
 </style>
 </head>
 <body>
