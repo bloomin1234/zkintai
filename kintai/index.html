@@ -510,7 +510,7 @@ h2,h3,label,td,th,p,summary,.note,.field label{color:inherit}
   <div class="field"><label>備考</label><input id="f-note"></div>
   <div id="f-qr" style="text-align:center;padding:6px 0"></div>
   <div class="foot">
-    <button class="btn danger sm" id="btn-emp-del">削除</button>
+    <button class="btn danger sm" id="btn-emp-del">退職にする</button>
     <button class="btn ghost sm" id="btn-emp-myqr">スマホ用マイQR発行</button>
     <span class="sp"></span>
     <button class="btn ghost" data-close="m-emp">閉じる</button>
@@ -1434,6 +1434,7 @@ $('#btn-emp-save').addEventListener('click', async () => {
     smrHealth: Number($('#f-smrh').value) || 0, smrPension: Number($('#f-smrp').value) || 0,
     note: $('#f-note').value.trim(),
   };
+  rec.updatedAt = new Date().toISOString();
   if (editingEmpId) rec.id = editingEmpId;
   await dbPut('employees', rec);
   await loadState();
@@ -1442,10 +1443,12 @@ $('#btn-emp-save').addEventListener('click', async () => {
 $('#btn-emp-del').addEventListener('click', async () => {
   if (!editingEmpId) return;
   const e = empById(editingEmpId);
-  if (!confirm(`${e.name} さんを削除しますか？\n（勤怠・給与の履歴は残ります。退職の場合は「状態＝退職」がおすすめです）`)) return;
-  await dbDel('employees', editingEmpId);
+  if (!confirm(`${e.name} さんを「退職」にしますか？\n在籍者・打刻名簿から外れ、他の端末にも反映されます。\n勤怠・給与の履歴は残ります。`)) return;
+  const u = JSON.parse(JSON.stringify(e));
+  u.status = '退職'; u.updatedAt = new Date().toISOString();
+  await dbPut('employees', u);
   await loadState();
-  closeModal('m-emp'); toast('削除しました。'); renderers.emp();
+  closeModal('m-emp'); toast('退職にしました。'); renderers.emp();
 });
 
 /* --- 従業員CSV --- */
@@ -2399,6 +2402,13 @@ renderers.calc = function () {
 renderers.data = function () {
   $('#data-body').innerHTML = `
   <div class="card">
+    <h3>クラウド同期</h3>
+    <p class="note" style="margin-bottom:10px">別の端末で登録・編集した内容（従業員・会社情報・料率設定）を、この端末に取り込みます。クラウドにログインしている必要があります。念のため、先に下の「バックアップ保存（JSON）」を取っておくと安心です。</p>
+    <div class="toolbar">
+      <button class="btn pri sm" id="btn-cloud-pull">クラウドから取り込む（最新に更新）</button>
+    </div>
+  </div>
+  <div class="card">
     <h3>データ管理</h3>
     <p class="note" style="margin-bottom:10px">データはこの端末のブラウザ内（IndexedDB）にのみ保存されます。端末の変更・故障に備えて、定期的にバックアップを保存してください。</p>
     <div class="toolbar">
@@ -2445,6 +2455,7 @@ async function saveCalcInputs() {
   if (gt('otsuTable')) cur.taxTables.otsuTable = readSetTable('otsuTable', ['upTo', 'amount'])
     .sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity));
   ensureRateHistory();
+  S.settingsUpdatedAt = new Date().toISOString();
   await saveSettings();
 }
 ['#v-calc', '#v-data'].forEach(sel => $(sel).addEventListener('click', async e => {
@@ -2488,6 +2499,7 @@ async function saveCalcInputs() {
     clone.effectiveFrom = v;
     S.rateHistory.push(clone);
     ensureRateHistory(); RS_SEL = v;
+    S.settingsUpdatedAt = new Date().toISOString();
     await saveSettings(); renderers.calc();
     toast(ymJP(v) + 'から適用のセットを作成しました（現在値の複製）。数値を変えて「設定を保存」してください。');
   }
@@ -2496,6 +2508,7 @@ async function saveCalcInputs() {
     if (!confirm(ymJP(RS_SEL) + 'から適用のセットを削除します。以降の月は1つ前のセットで計算されるようになります。よろしいですか？')) return;
     S.rateHistory = S.rateHistory.filter(r => r.effectiveFrom !== RS_SEL);
     RS_SEL = null; ensureRateHistory();
+    S.settingsUpdatedAt = new Date().toISOString();
     await saveSettings(); renderers.calc(); toast('削除しました。');
   }
   if (id === 'btn-tax-reset') {
@@ -2507,6 +2520,7 @@ async function saveCalcInputs() {
     cur.taxTables.otsuTable = keepOtsu;
     cur.rateLabel = D.rateLabel; cur.taxTableLabel = D.taxTableLabel;
     ensureRateHistory();
+    S.settingsUpdatedAt = new Date().toISOString();
     await saveSettings(); renderers.calc(); toast('既定値に戻しました。');
   }
   if (id === 'btn-otsu-add') {
@@ -2532,6 +2546,21 @@ async function saveCalcInputs() {
     download(`Z勤怠_バックアップ_${todayStr()}.json`, JSON.stringify(data, null, 1), 'application/json');
   }
   if (id === 'btn-restore') $('#restore-file').click();
+  if (id === 'btn-cloud-pull') {
+    if (!(window.cloudCfg && window.cloudCfg() && S.cloudSync && S.cloudSync.companyId)) {
+      toast('先に「契約」タブでクラウドにログインしてください。'); return;
+    }
+    if (!confirm('この端末の従業員・会社情報・料率設定を、クラウドの最新内容で更新します。\nこの端末だけにある未送信の変更は上書きされます。\nよろしいですか？')) return;
+    toast('クラウドから取り込んでいます…');
+    try {
+      const n = await window.cloudPullMasters();
+      renderers.data && renderers.data();
+      renderers.calc && renderers.calc();
+      const el = $('#h-company'); if (el) el.textContent = S.company.name || '会社名未設定（「計算設定」で入力）';
+      toast('クラウドの最新データに更新しました（従業員 ' + n + '名）。');
+    } catch (e) { toast('取り込みに失敗：' + (e.message || '')); }
+    return;
+  }
   if (id === 'btn-wipe') {
     const linked = window.cloudCfg && window.cloudCfg() && S.cloudSync && S.cloudSync.companyId;
     if (!confirm('従業員・勤怠・給与・各種設定をすべて削除して、初期状態に戻します。' + (linked ? '\nクラウド上の自社データも削除されます（ログインは保持します）。' : '') + '\n元に戻せません。よろしいですか？')) return;
@@ -2726,6 +2755,54 @@ async function cloudUpdateCompanyName(name) {
   CS().companyName = name || '';
 }
 window.cloudUpdateCompanyName = cloudUpdateCompanyName;
+/* ---------- 管理端末：クラウドから最新マスタを取り込む（この端末を最新化） ---------- */
+async function cloudPullMasters() {
+  if (!cloudCfg()) throw new Error('クラウド未設定です');
+  const tok = await getTok();
+  if (!tok) throw new Error('未ログインです');
+  const cid = await ensureCompany();
+  if (!cid) throw new Error('会社が未登録です');
+  let n = 0;
+  // ① 従業員（フル）：コード一致は更新、無ければ追加
+  const er = await sb(`/rest/v1/employees?company_id=eq.${cid}&select=*`);
+  const rows = await er.json();
+  if (Array.isArray(rows)) for (const r of rows) {
+    const obj = {
+      code: String(r.code), name: r.name || '', kana: r.kana || '', dept: r.dept || '',
+      email: r.email || '', birth: r.birth || '', join: r.join_date || '', status: r.status || '在職',
+      payType: r.pay_type || 'monthly', baseSalary: r.base_salary || 0, commute: r.commute || 0,
+      allowance: r.allowance || 0, taxCategory: r.tax_category || 'kou', dependents: r.dependents || 0,
+      residentTax: r.resident_tax || 0, healthIns: !!r.health_ins, pensionIns: !!r.pension_ins,
+      empIns: !!r.emp_ins, smrHealth: r.smr_health || 0, smrPension: r.smr_pension || 0, note: r.note || ''
+    };
+    const ex = empByCode(String(r.code));
+    if (ex) { Object.assign(ex, obj); await dbPut('employees', ex); }
+    else { await dbPut('employees', obj); }
+    n++;
+  }
+  // ② 料率セット
+  const rr = await sb(`/rest/v1/rate_sets?company_id=eq.${cid}&select=*&order=effective_from.asc`);
+  const rss = await rr.json();
+  if (Array.isArray(rss) && rss.length) S.rateHistory = rss.map(x => ({
+    effectiveFrom: x.effective_from,
+    rates: (x.payload && x.payload.rates) || {}, premiums: (x.payload && x.payload.premiums) || {},
+    taxTables: (x.payload && x.payload.taxTables) || {},
+    rateLabel: (x.payload && x.payload.rateLabel) || '', taxTableLabel: (x.payload && x.payload.taxTableLabel) || ''
+  }));
+  // ③ 会社情報・給与規定・GAS URL
+  const ar = await sb(`/rest/v1/app_settings?company_id=eq.${cid}&key=eq.main&select=value`);
+  const av = await ar.json();
+  if (Array.isArray(av) && av[0] && av[0].value) {
+    const v = av[0].value;
+    if (v.company) S.company = Object.assign({}, S.company, v.company);
+    if (v.payroll) S.payroll = Object.assign({}, S.payroll, v.payroll);
+    if (typeof v.gasUrl === 'string') S.gasUrl = v.gasUrl;
+  }
+  await saveSettings();
+  await loadState();
+  return n;
+}
+window.cloudPullMasters = cloudPullMasters;
 /* ---------- パスワード再設定 ---------- */
 // 再設定メールを送る（メール内リンクは現在のページ /kintai/ に戻る）
 async function cloudResetRequest(email) {
@@ -2900,6 +2977,26 @@ async function pullRosterLite() {
   return list.length;
 }
 
+/* ---------- クラウド⇔ローカルの従業員変換 ---------- */
+function cloudEmpToLocal(r) {
+  return { code: String(r.code), name: r.name || '', kana: r.kana || '', dept: r.dept || '',
+    email: r.email || '', birth: r.birth || '', join: r.join_date || '', status: r.status || '在職',
+    payType: r.pay_type || 'monthly', baseSalary: r.base_salary || 0, commute: r.commute || 0,
+    allowance: r.allowance || 0, taxCategory: r.tax_category || 'kou', dependents: r.dependents || 0,
+    residentTax: r.resident_tax || 0, healthIns: !!r.health_ins, pensionIns: !!r.pension_ins,
+    empIns: !!r.emp_ins, smrHealth: r.smr_health || 0, smrPension: r.smr_pension || 0,
+    note: r.note || '', updatedAt: r.updated_at || '' };
+}
+function localEmpToCloud(e) {
+  return { code: String(e.code), name: e.name, kana: e.kana || '', dept: e.dept || '', email: e.email || '',
+    birth: e.birth || '', join_date: e.join || '', status: e.status || '在職',
+    pay_type: e.payType || 'monthly', base_salary: e.baseSalary || 0, commute: e.commute || 0,
+    allowance: e.allowance || 0, tax_category: e.taxCategory || 'kou', dependents: e.dependents || 0,
+    resident_tax: e.residentTax || 0, health_ins: !!e.healthIns, pension_ins: !!e.pensionIns,
+    emp_ins: !!e.empIns, smr_health: e.smrHealth || 0, smr_pension: e.smrPension || 0,
+    note: e.note || '', updated_at: e.updatedAt || new Date().toISOString() };
+}
+
 /* ---------- 管理端末：全体同期 ---------- */
 async function syncAll(silent) {
   if (!cloudCfg()) throw new Error('クラウド未設定です');
@@ -2909,21 +3006,61 @@ async function syncAll(silent) {
   if (!cid) throw new Error('会社が未登録です（設定画面の「新規登録」から）');
   const stat = { applied: 0, skipped: 0 };
   const now = () => new Date().toISOString();
-  // ① マスタ送信
-  await sbUpsert('employees', EMP.map(e => Object.assign({ company_id: cid }, {
-    code: String(e.code), name: e.name, kana: e.kana || '', dept: e.dept || '', email: e.email || '',
-    birth: e.birth || '', join_date: e.join || '', status: e.status || '在職',
-    pay_type: e.payType || 'monthly', base_salary: e.baseSalary || 0, commute: e.commute || 0,
-    allowance: e.allowance || 0, tax_category: e.taxCategory || 'kou', dependents: e.dependents || 0,
-    resident_tax: e.residentTax || 0, health_ins: !!e.healthIns, pension_ins: !!e.pensionIns,
-    emp_ins: !!e.empIns, smr_health: e.smrHealth || 0, smr_pension: e.smrPension || 0,
-    note: e.note || '', updated_at: now() })), 'company_id,code');
-  await sbUpsert('rate_sets', S.rateHistory.map(rs => ({ company_id: cid,
-    effective_from: rs.effectiveFrom,
-    payload: { rates: rs.rates, premiums: rs.premiums, taxTables: rs.taxTables,
-      rateLabel: rs.rateLabel, taxTableLabel: rs.taxTableLabel }, updated_at: now() })), 'company_id,effective_from');
-  await sbUpsert('app_settings', [{ company_id: cid, key: 'main',
-    value: { company: S.company, payroll: S.payroll, gasUrl: S.gasUrl }, updated_at: now() }], 'company_id,key');
+  // ① マスタ：双方向マージ（更新時刻が新しい方を採用。空でローカルを上書きしない安全策つき）
+  // 1-a) 設定ブロック（会社情報・給与規定・料率・GAS）をまるごと比較
+  {
+    const ar = await sb(`/rest/v1/app_settings?company_id=eq.${cid}&key=eq.main&select=value,updated_at`);
+    const arr = await ar.json();
+    const cloudRow = (Array.isArray(arr) && arr[0]) ? arr[0] : null;
+    const localT = S.settingsUpdatedAt || '';
+    const cloudT = cloudRow ? (cloudRow.updated_at || '') : '';
+    const cloudCo = (cloudRow && cloudRow.value && cloudRow.value.company && cloudRow.value.company.name) || '';
+    const localCo = (S.company && S.company.name) || '';
+    const cloudNewer = !!cloudRow && cloudT > localT;
+    const wouldErase = !cloudCo && !!localCo;           // 空のクラウドで埋まったローカルを消さない
+    if (cloudNewer && !wouldErase) {                    // クラウドが新しい → 取り込む
+      const v = cloudRow.value || {};
+      if (v.company) S.company = Object.assign({}, S.company, v.company);
+      if (v.payroll) S.payroll = Object.assign({}, S.payroll, v.payroll);
+      if (Array.isArray(v.rateHistory) && v.rateHistory.length) S.rateHistory = v.rateHistory;
+      if (typeof v.gasUrl === 'string') S.gasUrl = v.gasUrl;
+      S.settingsUpdatedAt = cloudT;
+    } else {                                            // こちらが新しい（または保護）→ 送信
+      const t = wouldErase ? now() : (S.settingsUpdatedAt || now());
+      S.settingsUpdatedAt = t;
+      await sbUpsert('app_settings', [{ company_id: cid, key: 'main',
+        value: { company: S.company, payroll: S.payroll, rateHistory: S.rateHistory, gasUrl: S.gasUrl },
+        updated_at: t }], 'company_id,key');
+    }
+    await saveSettings();
+    // 互換：rate_sets テーブルにも反映（管理コンソール参照用）
+    await sbUpsert('rate_sets', S.rateHistory.map(rs => ({ company_id: cid,
+      effective_from: rs.effectiveFrom,
+      payload: { rates: rs.rates, premiums: rs.premiums, taxTables: rs.taxTables,
+        rateLabel: rs.rateLabel, taxTableLabel: rs.taxTableLabel }, updated_at: now() })), 'company_id,effective_from');
+  }
+  // 1-b) 従業員：1人ずつ updatedAt で新しい方を採用（退職もそのまま同期＝削除の伝播）
+  {
+    const er = await sb(`/rest/v1/employees?company_id=eq.${cid}&select=*`);
+    const cloudEmps = await er.json();
+    const cloudByCode = new Map();
+    if (Array.isArray(cloudEmps)) {
+      for (const r of cloudEmps) cloudByCode.set(String(r.code), r);
+      for (const r of cloudEmps) {
+        const local = empByCode(String(r.code));
+        const ct = r.updated_at || '', lt = local ? (local.updatedAt || '') : '';
+        if (!local) { await dbPut('employees', cloudEmpToLocal(r)); }
+        else if (ct > lt) { const u = cloudEmpToLocal(r); u.id = local.id; await dbPut('employees', u); }
+      }
+      await loadState();
+    }
+    const push = EMP.filter(e => {
+      const c = cloudByCode.get(String(e.code));
+      return !c || ((e.updatedAt || '') > (c.updated_at || ''));
+    });
+    if (push.length) await sbUpsert('employees',
+      push.map(e => Object.assign({ company_id: cid }, localEmpToCloud(e))), 'company_id,code');
+  }
   // ② 打刻の受信（前回カーソル以降）
   const since = CS().punchCursor || '1970-01-01T00:00:00Z';
   const res = await sb(`/rest/v1/punches?select=*&created_at=gt.${encodeURIComponent(since)}&order=created_at.asc&limit=2000`);
@@ -3101,7 +3238,7 @@ $('#v-plan').addEventListener('click', async ev => {
       await cloudLogin(em, pw);
       const cid = await ensureCompany();
       if (!cid) { toast('ログインしました。会社が未登録です — 会社名を入れて「新規登録」を押してください。'); renderers.plan(); }
-      else { await loadPlans().catch(() => {}); toast('ログインしました。'); show('home'); }
+      else { await loadPlans().catch(() => {}); toast('ログインしました。最新データを取り込んでいます…'); show('home'); syncAll(true).catch(() => {}); }
     }
     if (id === 'btn-cloud-forgot') {
       ev.preventDefault();
