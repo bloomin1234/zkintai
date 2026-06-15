@@ -2225,6 +2225,18 @@ renderers.plan = function () {
     <h3>料金プラン</h3>
     ${planTableHTML(CSx().plan)}
   </div>
+  <div class="card">
+    <h3>パスワード変更</h3>
+    <p class="note" style="margin-bottom:10px">ログイン中のアカウント（${esc(CSx().loginEmail || '')}）のパスワードを変更します。変更してもログインはそのまま続きます。</p>
+    <div class="grid2">
+      <div class="field"><label>現在のパスワード</label><input id="pw-cur" type="password" autocomplete="current-password"></div>
+      <div class="field"><label>新しいパスワード（8文字以上）</label><input id="pw-new" type="password" autocomplete="new-password"></div>
+      <div class="field"><label>新しいパスワード（確認）</label><input id="pw-new2" type="password" autocomplete="new-password"></div>
+    </div>
+    <div class="toolbar" style="margin-top:4px">
+      <button class="btn pri sm" id="btn-pw-change">パスワードを変更</button>
+    </div>
+  </div>
   ` : `
   <div class="card">
     <h3>新規登録 / ログイン <span class="tag g">7日間無料</span></h3>
@@ -2731,6 +2743,7 @@ async function cloudSignup(email, password) {
   if (j.access_token) {
     await saveTok({ access_token: j.access_token, refresh_token: j.refresh_token,
       exp: Date.now() + ((j.expires_in || 3600) - 120) * 1000 });
+    CS().loginEmail = email; await saveSettings();
     return { session: true };
   }
   return { session: false };   // メール確認が必要な設定の場合
@@ -2822,6 +2835,19 @@ async function cloudUpdatePassword(newPassword) {
   return j;
 }
 window.cloudUpdatePassword = cloudUpdatePassword;
+// ログイン中の本人がパスワードを変更（現在のパスワードを確認 → 更新 → 新パスワードでセッション維持）
+async function cloudChangePassword(currentPw, newPw) {
+  const c = cloudCfg(); if (!c) throw new Error('クラウド未設定です');
+  const tok = await getTok(); if (!tok) throw new Error('未ログインです。先にログインしてください。');
+  const email = ((CS().loginEmail) || '').trim();
+  if (!email) throw new Error('ログイン中のメールアドレスを確認できません。一度ログアウトして再ログインしてください。');
+  try { await authPost('/auth/v1/token?grant_type=password', { email, password: currentPw }); }
+  catch (e) { throw new Error('現在のパスワードが正しくありません。'); }
+  await cloudUpdatePassword(newPw);
+  await cloudLogin(email, newPw);   // 新パスワードでセッションを取り直す（ログイン継続）
+  return true;
+}
+window.cloudChangePassword = cloudChangePassword;
 // メールのリンクで戻ったか判定し、トークンを取り込む（init時に呼ぶ）
 async function cloudConsumeRecovery() {
   const h = location.hash || '';
@@ -3249,6 +3275,19 @@ $('#v-plan').addEventListener('click', async ev => {
       toast('パスワード再設定メールを送りました。メール内のリンクを開いて、新しいパスワードを設定してください。');
     }
     if (id === 'btn-cloud-logout') { await cloudLogout(); toast('ログアウトしました。'); show('plan'); }
+    if (id === 'btn-pw-change') {
+      const cur = ($('#pw-cur') && $('#pw-cur').value) || '';
+      const np = ($('#pw-new') && $('#pw-new').value) || '';
+      const np2 = ($('#pw-new2') && $('#pw-new2').value) || '';
+      if (!cur || !np) { toast('現在のパスワードと新しいパスワードを入力してください。'); return; }
+      if (np.length < 8) { toast('新しいパスワードは8文字以上にしてください。'); return; }
+      if (np !== np2) { toast('新しいパスワード（確認）が一致しません。'); return; }
+      if (np === cur) { toast('現在と異なるパスワードを入力してください。'); return; }
+      toast('パスワードを変更しています…');
+      try { await cloudChangePassword(cur, np); toast('パスワードを変更しました。'); renderers.plan(); }
+      catch (e) { toast(e.message || 'パスワードを変更できませんでした。'); }
+      return;
+    }
     if (id === 'btn-cloud-sync') { toast('同期しています…'); await syncAll(false); renderers.plan(); }
     if (id === 'btn-cloud-pay') { openCheckout(); }
     if (id === 'btn-cloud-portal') { await openBillingPortal(); }
