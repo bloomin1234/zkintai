@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FC統合運営基盤 デモ</title>
+<style>
+  :root{--ink:#1A1A1A; --sub:#6B6963; --line:#D6D4CE; --bg:#F2F1ED; --sfc:#FBFAF7; color-scheme:light;}
+  *{box-sizing:border-box; border-radius:0; margin:0; padding:0;
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;}
+  html{background:var(--bg);}
+  body{background:var(--bg); color:var(--ink); height:100vh; display:flex; flex-direction:column;}
+  .hd{background:#1F1F1D; color:#fff; padding:10px 14px; flex-shrink:0;
+    display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .hd .b{font-size:10px; letter-spacing:.14em; opacity:.75;}
+  .hd .t{font-size:15px; font-weight:700; margin-top:1px;}
+  select{border:1px solid #6B6963; background:#2C2B29; color:#fff; font-size:15px; font-weight:700;
+    padding:10px 12px; cursor:pointer; max-width:100%;}
+  iframe{flex:1; width:100%; border:none; background:var(--bg); display:none;}
+  iframe.on{display:block;}
+</style>
+</head>
+<body>
+  <div class="hd">
+    <div>
+      <div class="b">SMART ORDER × SMART STOCK ｜ FC統合運営基盤</div>
+      <div class="t">操作デモ</div>
+    </div>
+    <select onchange="sw(this.value)" aria-label="画面切替">
+      <option value="f1">加盟店アプリ（スマホ）</option>
+      <option value="f2">SVアプリ（スマホ）</option>
+      <option value="f3">本部・SV管理（PC）</option>
+    </select>
+  </div>
+  <iframe id="f1" class="on" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;>
+<title>FC統合運営基盤 モバイルモック（加盟店）</title>
+<style>
+  :root{
+    --so:#1F1F1D; --ss:#3A3936; --amber:#8A8781; --red:#B3261E; --bar:#B0AEA7; --barcur:#1A1A1A;
+    --ink:#1A1A1A; --sub:#666; --line:#D6D4CE; --bg:#F2F1ED; --white:#FBFAF7;
+    --frame:#E4E3DE; --ambbg:#EFEEE8; --ssbg:#ECEBE6; --faint:#B4B2AB;
+    --so-t:#1A1A1A; --amb-t:#6B6963; --red-t:#B3261E; --ss-t:#4A4843;
+    color-scheme: light;
+  }
+  :root[data-theme=&quot;dark&quot;]{
+      --ink:#EFEBE0; --sub:#A9A18D; --line:#46402F; --bg:#23201A; --white:#2C2921;
+      --frame:#181613; --ambbg:#3A311C; --ssbg:#262B26; --faint:#6E685A;
+      --so-t:#E8E6E0; --amb-t:#B9B7B0; --red-t:#F09287; --ss-t:#C9C7C0;
+      --so:#55534C; --ss:#66645C; --amber:#7A7871; --bar:#5F5D55; --barcur:#EFEBE0;
+      color-scheme: dark;
+  }
+  *{box-sizing:border-box; border-radius:0; margin:0; padding:0;
+    font-family:&quot;Hiragino Kaku Gothic ProN&quot;,&quot;Yu Gothic&quot;,Meiryo,sans-serif;}
+  html,body{background:var(--frame);}
+  main{background:var(--bg);}
+  .phone{max-width:420px; margin:0 auto; background:var(--bg); min-height:100vh;
+    display:flex; flex-direction:column; border-left:1px solid var(--line); border-right:1px solid var(--line); color:var(--ink);}
+
+  /* ---------- header ---------- */
+  .hd{background:var(--so); color:#fff; padding:13.5px 15.5px 11.5px;}
+  .hd .brand{font-size:11.5px; letter-spacing:.18em; opacity:.85;}
+  .hd .row{display:flex; align-items:center; justify-content:space-between; margin-top:2px;}
+  .hd .store{font-size:17.5px; font-weight:700;}
+  .hd .bell{position:relative; width:26px; height:26px;}
+  .hd .bell svg{width:22px; height:22px; fill:none; stroke:#fff; stroke-width:1.6;}
+  .tgl-theme{border:1px solid rgba(255,255,255,.55); background:none; color:#fff;
+    font-size:11.5px; font-weight:700; padding:4px 9.5px; white-space:nowrap;}
+  .hd .badge{position:absolute; top:-4px; right:-6px; background:var(--amber); color:#fff;
+    font-size:11.5px; font-weight:700; min-width:17.5px; height:17.5px; line-height:17.5px; text-align:center;}
+
+  main{flex:1; overflow-y:auto; padding-bottom:9.5px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+
+  .sec{padding:13.5px 15.5px 4px;}
+  .label{font-size:12.5px; letter-spacing:.14em; color:var(--sub); font-weight:700; margin-bottom:6px;}
+  .card{background:var(--white); border:1px solid var(--line); margin-bottom:11.5px;}
+
+  /* ---------- home ---------- */
+  .deadline{border-left:4px solid var(--red); padding:13.5px;}
+  .deadline .t{font-size:13.5px; color:var(--sub);}
+  .deadline .v{font-size:19.5px; font-weight:700; margin-top:2px;}
+  .deadline .v em{font-style:normal; color:var(--amber);}
+  .stat3{display:flex; border:1px solid var(--line); background:var(--white); margin:0 15.5px 11.5px;}
+  .stat3 > div{flex:1; text-align:center; padding:11.5px 4px; border-right:1px solid var(--line);}
+  .stat3 > div:last-child{border-right:none;}
+  .stat3 .n{font-size:22px; font-weight:700;}
+  .stat3 .n.red{color:var(--red-t);} .stat3 .n.amb{color:var(--amb-t);}
+  .stat3 .k{font-size:11.5px; color:var(--sub); margin-top:2px;}
+  .notice{padding:11.5px 13.5px; border-bottom:1px solid var(--line); display:flex; gap:9.5px; align-items:flex-start;}
+  .notice:last-child{border-bottom:none;}
+  .tag{font-size:11.5px; font-weight:700; color:#fff; padding:2px 6px; white-space:nowrap;}
+  .tag.hq{background:var(--so);} .tag.req{background:var(--amber);} .tag.sv{background:var(--ss);}
+  .notice .tx{font-size:14.5px; line-height:1.5;}
+  .notice .due{font-size:12.5px; color:var(--red-t); font-weight:700;}
+  .notice.unread .tx{font-weight:700;}
+  .qa{display:grid; grid-template-columns:1fr 1fr; gap:9.5px; padding:0 15.5px 13.5px;}
+  .qa button{border:1px solid var(--so); background:var(--white); color:var(--so-t);
+    font-size:14.5px; font-weight:700; padding:13.5px 4px;}
+  .qa button.fill{background:var(--so); color:#fff;}
+
+  /* ---------- order ---------- */
+  .datebar{display:flex; gap:9.5px; padding:13.5px 15.5px 4px;}
+  .datebar button{flex:1; border:1px solid var(--line); background:var(--white); padding:9.5px 2px; font-size:13.5px; color:var(--ink);}
+  .datebar button.on{border-color:var(--so); background:var(--so); color:#fff; font-weight:700;}
+  .cutoff{margin:9.5px 15.5px; border:1px solid var(--red); background:var(--ambbg); color:var(--red-t);
+    font-size:13.5px; font-weight:700; padding:9.5px 11.5px;}
+  .item{display:flex; align-items:center; justify-content:space-between; padding:11.5px 13.5px; border-bottom:1px solid var(--line);}
+  .item:last-child{border-bottom:none;}
+  .item .nm{font-size:14.5px; font-weight:700;}
+  .item .sp{font-size:12.5px; color:var(--sub); margin-top:2px;}
+  .step{display:flex; align-items:center; border:1px solid var(--line);}
+  .step button{width:34px; height:34px; background:var(--white); border:none; font-size:19.5px; color:var(--so-t); font-weight:700;}
+  .step .q{width:40px; text-align:center; font-size:15.5px; font-weight:700; border-left:1px solid var(--line); border-right:1px solid var(--line); line-height:34px;}
+  .step .q.zero{color:var(--faint); font-weight:400;}
+  .total{display:flex; justify-content:space-between; align-items:center; padding:13.5px; border-top:2px solid var(--so); background:var(--white); margin:0 15.5px 11.5px; border-left:1px solid var(--line); border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .total .k{font-size:13.5px; color:var(--sub);}
+  .total .v{font-size:19.5px; font-weight:700;}
+  .cta{display:block; width:calc(100% - 28px); margin:0 15.5px 9.5px; padding:15.5px; border:none;
+    background:var(--so); color:#fff; font-size:16.5px; font-weight:700;}
+  .cta.ghost{background:var(--white); color:var(--so-t); border:1px solid var(--so);}
+
+  /* ---------- qsc ---------- */
+  .prev{border-left:4px solid var(--amber); padding:11.5px 13.5px;}
+  .prev .t{font-size:12.5px; font-weight:700; color:var(--amb-t);}
+  .prev .tx{font-size:13.5px; margin-top:4px; line-height:1.5;}
+  .q-item{padding:11.5px 13.5px; border-bottom:1px solid var(--line);}
+  .q-item:last-child{border-bottom:none;}
+  .q-item .qq{font-size:14.5px; font-weight:700;}
+  .chips{display:flex; gap:6px; margin-top:9.5px;}
+  .chips button{flex:1; height:32px; border:1px solid var(--line); background:var(--white); font-size:14.5px; color:var(--ink);}
+  .chips button.on{background:var(--so); border-color:var(--so); color:#fff; font-weight:700;}
+  .photo{border:1px dashed var(--sub); color:var(--sub); text-align:center; padding:17.5px 9.5px; font-size:13.5px; margin-top:9.5px;}
+  textarea{width:100%; border:1px solid var(--line); padding:9.5px; font-size:14.5px; margin-top:9.5px; min-height:120px; line-height:1.6; resize:vertical; background:var(--white); color:var(--ink);}
+
+  /* ---------- tasks ---------- */
+  .task{padding:13.5px;}
+  .task .hd2{display:flex; justify-content:space-between; align-items:flex-start; gap:9.5px;}
+  .task .ti{font-size:14.5px; font-weight:700; line-height:1.45;}
+  .pill{font-size:11.5px; font-weight:700; padding:2px 6px; color:#fff; white-space:nowrap;}
+  .pill.over{background:var(--red);} .pill.open{background:var(--amber);} .pill.done{background:var(--sub);}
+  .meta{display:flex; gap:13.5px; font-size:12.5px; color:var(--sub); margin-top:6px;}
+  .meta b{color:var(--ink);}
+  .meta .over{color:var(--red-t); font-weight:700;}
+  .svc{border-left:3px solid var(--ss); background:var(--ssbg); font-size:13.5px; padding:9.5px 11.5px; margin-top:9.5px; line-height:1.5;}
+  .task .btns{display:flex; gap:9.5px; margin-top:11.5px;}
+  .task .btns button{flex:1; padding:11.5px 4px; font-size:13.5px; font-weight:700; border:1px solid var(--so); background:var(--white); color:var(--so-t);}
+  .task .btns button.fill{background:var(--so); color:#fff;}
+  .task.done-card{opacity:.55;}
+
+  /* ---------- bottom nav + black band ---------- */
+  .nav-wrap{position:sticky; bottom:0;}
+  nav{display:flex; background:var(--white); border-top:1px solid var(--line);}
+  nav button{flex:1; padding:14px 0 12px; border:none; background:none; color:var(--sub); font-size:13px; font-weight:700;}
+  nav button svg{display:block; margin:0 auto 4px; width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7;}
+  nav button.on{color:var(--so-t);}
+  nav button .nbadge{position:relative;}
+  .band{height:calc(11.5px + env(safe-area-inset-bottom)); background:#111;}
+
+  .note{font-size:11.5px; color:var(--sub); text-align:center; padding:6px 0 11.5px;}
+</style>
+</head>
+<body>
+<div class=&quot;phone&quot;>
+
+  <div class=&quot;hd&quot;>
+    <div class=&quot;brand&quot;>SMART ORDER ｜ FC統合運営基盤</div>
+    <div class=&quot;row&quot;>
+      <div class=&quot;store&quot;>○○フーズ 旗の台店</div>
+      <div style=&quot;display:flex; align-items:center; gap:13.5px;&quot;>
+        <button class=&quot;tgl-theme&quot; onclick=&quot;toggleTheme()&quot;>☾ ダーク</button>
+        <div class=&quot;bell&quot;>
+          <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6&quot;/><path d=&quot;M10 20a2 2 0 0 0 4 0&quot;/></svg>
+          <span class=&quot;badge&quot;>3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ===== HOME ===== -->
+    <section class=&quot;screen on&quot; id=&quot;scr-home&quot;>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>本日の発注</div>
+        <div class=&quot;card deadline&quot;>
+          <div class=&quot;t&quot;>8/21（金）納品分の締切</div>
+          <div class=&quot;v&quot;>本日 15:00 <em>／ 残り 2時間14分</em></div>
+        </div>
+      </div>
+      <div class=&quot;stat3&quot;>
+        <div><div class=&quot;n amb&quot;>3</div><div class=&quot;k&quot;>未読通知</div></div>
+        <div><div class=&quot;n red&quot;>未</div><div class=&quot;k&quot;>今週のQSC</div></div>
+        <div><div class=&quot;n red&quot;>2</div><div class=&quot;k&quot;>未完了課題<br>（超過1）</div></div>
+      </div>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>本部からのお知らせ</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;notice unread&quot;><span class=&quot;tag req&quot;>要回答</span>
+            <div class=&quot;tx&quot;>9月キャンペーン「温玉豚丼」販促物の設置確認 <span class=&quot;due&quot;>回答期限 8/21</span></div></div>
+          <div class=&quot;notice unread&quot;><span class=&quot;tag hq&quot;>本部</span>
+            <div class=&quot;tx&quot;>丼たれの規格変更について（8/25納品分から）</div></div>
+          <div class=&quot;notice unread&quot;><span class=&quot;tag hq&quot;>本部</span>
+            <div class=&quot;tx&quot;>改訂版 調理マニュアル v3.2 を配信しました</div></div>
+          <div class=&quot;notice&quot;><span class=&quot;tag sv&quot;>SV</span>
+            <div class=&quot;tx&quot;>8/26（水）定期訪問の事前チェックのお願い</div></div>
+        </div>
+      </div>
+      <div class=&quot;qa&quot;>
+        <button class=&quot;fill&quot; onclick=&quot;go('order')&quot;>発注をはじめる</button>
+        <button onclick=&quot;go('qsc')&quot;>QSCを提出する</button>
+      </div>
+    </section>
+
+    <!-- ===== ORDER ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-order&quot;>
+      <div class=&quot;datebar&quot;>
+        <button class=&quot;on&quot;>8/21（金）</button>
+        <button>8/22（土）</button>
+        <button>8/24（月）</button>
+      </div>
+      <div class=&quot;cutoff&quot;>この納品日の締切：本日 15:00（締切後は本部へ電話連絡）</div>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>定番品目</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>豚ローススライス 2mm</div><div class=&quot;sp&quot;>1kg×10 ／ ¥8,900</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q&quot;>3</div><button>＋</button></div></div>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>丼たれ（専用）</div><div class=&quot;sp&quot;>1.8L×6 ／ ¥5,400</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q&quot;>1</div><button>＋</button></div></div>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>精米 ゆめぴりか</div><div class=&quot;sp&quot;>10kg ／ ¥4,600</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q&quot;>2</div><button>＋</button></div></div>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>玉ねぎ</div><div class=&quot;sp&quot;>10kg箱 ／ ¥2,300</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q zero&quot;>0</div><button>＋</button></div></div>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>丼容器 M（フタ付）</div><div class=&quot;sp&quot;>50個×4 ／ ¥3,800</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q&quot;>1</div><button>＋</button></div></div>
+          <div class=&quot;item&quot;><div><div class=&quot;nm&quot;>紅生姜</div><div class=&quot;sp&quot;>1kg×10 ／ ¥6,200</div></div>
+            <div class=&quot;step&quot;><button>−</button><div class=&quot;q zero&quot;>0</div><button>＋</button></div></div>
+        </div>
+      </div>
+      <div class=&quot;total&quot;><span class=&quot;k&quot;>7品目・数量計 7 ｜ 合計（税抜）</span><span class=&quot;v&quot;>¥46,300</span></div>
+      <button class=&quot;cta ghost&quot;>前回発注をコピー</button>
+      <button class=&quot;cta&quot;>この内容で注文を確定する</button>
+      <div class=&quot;note&quot;>確定後も締切までは変更・取消できます（履歴は本部に記録されます）</div>
+    </section>
+
+    <!-- ===== QSC ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-qsc&quot;>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>週次QSCチェック（8月 第3週）</div>
+        <div class=&quot;card prev&quot;>
+          <div class=&quot;t&quot;>前回指摘（8月 第2週・SV点検）</div>
+          <div class=&quot;tx&quot;>冷蔵庫内の温度記録が2日分未記入。是正タスクNo.128として登録済み。</div>
+        </div>
+        <div class=&quot;label&quot;>Q：品質・味</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;><div class=&quot;qq&quot;>1. 豚の盛付量が規定どおりである（並120g／大盛180g・計量確認）</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button class=&quot;on&quot;>4</button><button>5</button></div></div>
+          <div class=&quot;q-item&quot;><div class=&quot;qq&quot;>2. たれの計量（1杯40ml）と照りが基準写真どおりである</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button>4</button><button class=&quot;on&quot;>5</button></div></div>
+        </div>
+        <div class=&quot;label&quot;>C：清潔・衛生</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;><div class=&quot;qq&quot;>3. 豚肉の保管温度（4℃以下）と冷蔵庫の温度記録が毎日記入されている</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button class=&quot;on&quot;>3</button><button>4</button><button>5</button></div>
+            <div class=&quot;photo&quot;>＋ 温度記録表の写真を添付（必須）</div></div>
+          <div class=&quot;q-item&quot;><div class=&quot;qq&quot;>4. スライサー・まな板の生肉／野菜区分と洗浄消毒ができている</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button class=&quot;on&quot;>4</button><button>5</button></div></div>
+        </div>
+        <div class=&quot;label&quot;>S：サービス</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;><div class=&quot;qq&quot;>5. 提供時間（券売機発券から5分以内）を守れている</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button class=&quot;on&quot;>4</button><button>5</button></div>
+            <textarea placeholder=&quot;コメント（任意）：ピーク時に6分かかるケースあり&quot;></textarea></div>
+        </div>
+      </div>
+      <button class=&quot;cta&quot;>QSCチェックを提出する</button>
+      <div class=&quot;note&quot;>提出後はSV・本部が内容を確認します。基準未達の項目は自動で課題化されます。</div>
+    </section>
+
+    <!-- ===== TASKS ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-task&quot;>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>未完了の改善タスク（2件）</div>
+        <div class=&quot;card task&quot;>
+          <div class=&quot;hd2&quot;><div class=&quot;ti&quot;>No.128 冷蔵庫内の温度記録が未実施</div><span class=&quot;pill over&quot;>期限超過</span></div>
+          <div class=&quot;meta&quot;><span>責任者 <b>店長</b></span><span class=&quot;over&quot;>期限 8/18（超過2日）</span><span>優先度 高</span></div>
+          <div class=&quot;svc&quot;>SV：記録表を冷蔵庫扉に移設し、開店前チェックに組み込んでください。改善後の写真を証跡として提出をお願いします。</div>
+          <div class=&quot;btns&quot;><button>証跡写真を追加</button><button class=&quot;fill&quot;>完了を申請する</button></div>
+        </div>
+        <div class=&quot;card task&quot;>
+          <div class=&quot;hd2&quot;><div class=&quot;ti&quot;>No.131 ダスターの交換頻度が基準未達</div><span class=&quot;pill open&quot;>対応中</span></div>
+          <div class=&quot;meta&quot;><span>責任者 <b>ホール担当</b></span><span>期限 <b>8/25</b></span><span>優先度 中</span></div>
+          <div class=&quot;btns&quot;><button>証跡写真を追加</button><button class=&quot;fill&quot;>完了を申請する</button></div>
+        </div>
+        <div class=&quot;label&quot;>完了済み（直近）</div>
+        <div class=&quot;card task done-card&quot;>
+          <div class=&quot;hd2&quot;><div class=&quot;ti&quot;>No.119 券売機まわりのPOP剥がれ</div><span class=&quot;pill done&quot;>完了</span></div>
+          <div class=&quot;meta&quot;><span>SV承認 8/12</span><span>責任者 店長</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div style=&quot;height:9.5px&quot;></div>
+  </main>
+
+  <!-- bottom nav -->
+  <div class=&quot;nav-wrap&quot;>
+    <nav>
+      <button class=&quot;on&quot; data-s=&quot;home&quot; onclick=&quot;go('home')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M3 11 12 4l9 7&quot;/><path d=&quot;M5 10v10h14V10&quot;/></svg>ホーム</button>
+      <button data-s=&quot;order&quot; onclick=&quot;go('order')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M6 6h15l-2 8H8L6 3H3&quot;/><circle cx=&quot;9&quot; cy=&quot;20&quot; r=&quot;1.6&quot;/><circle cx=&quot;17&quot; cy=&quot;20&quot; r=&quot;1.6&quot;/></svg>発注</button>
+      <button data-s=&quot;qsc&quot; onclick=&quot;go('qsc')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M9 5h6v3H9z&quot;/><path d=&quot;M15 6h3v14H6V6h3&quot;/><path d=&quot;M9 13l2 2 4-4&quot;/></svg>QSC</button>
+      <button data-s=&quot;task&quot; onclick=&quot;go('task')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M4 6h16M4 12h16M4 18h10&quot;/><path d=&quot;M17 17l2 2 3-3&quot; transform=&quot;translate(0,-1)&quot;/></svg>改善</button>
+    </nav>
+    <div class=&quot;band&quot;></div>
+  </div>
+</div>
+
+<script>
+function toggleTheme(){
+  const r=document.documentElement;
+  const dark = r.getAttribute('data-theme')==='dark';
+  if(dark){ r.removeAttribute('data-theme'); } else { r.setAttribute('data-theme','dark'); }
+  document.querySelectorAll('.tgl-theme').forEach(b=>b.textContent = dark ? '☾ ダーク' : '☀ ライト');
+}
+function go(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+  document.getElementById('scr-'+s).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.s===s));
+  document.querySelector('main').scrollTop=0; window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
+"></iframe>
+  <iframe id="f2" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;>
+<title>FC統合運営基盤 SVモバイルモック</title>
+<style>
+  :root{
+    --so:#1F1F1D; --ss:#3A3936; --amber:#8A8781; --red:#B3261E; --bar:#B0AEA7; --barcur:#1A1A1A;
+    --ink:#1A1A1A; --sub:#666; --line:#D6D4CE; --bg:#F2F1ED; --sfc:#FBFAF7;
+    --frame:#E4E3DE; --ambbg:#EFEEE8; --ssbg:#ECEBE6; --track:#E5E4DE;
+    --so-t:#1A1A1A; --ss-t:#4A4843; --amb-t:#6B6963; --red-t:#B3261E;
+    color-scheme: light;
+  }
+  :root[data-theme=&quot;dark&quot;]{
+      --ink:#EFEBE0; --sub:#A9A18D; --line:#46402F; --bg:#23201A; --sfc:#2C2921;
+      --frame:#181613; --headbg:#2C332A; --ambbg:#3A311C; --ssbg:#262B26; --track:#3B352A;
+      --so-t:#E8E6E0; --ss-t:#C9C7C0; --amb-t:#B9B7B0; --red-t:#F09287;
+      --so:#55534C; --ss:#66645C; --amber:#7A7871; --bar:#5F5D55; --barcur:#EFEBE0;
+      color-scheme: dark;
+  }
+  *{box-sizing:border-box; border-radius:0; margin:0; padding:0;
+    font-family:&quot;Hiragino Kaku Gothic ProN&quot;,&quot;Yu Gothic&quot;,Meiryo,sans-serif;}
+  html,body{background:var(--frame);}
+  main{background:var(--bg);}
+  .phone{max-width:420px; margin:0 auto; background:var(--bg); min-height:100vh;
+    display:flex; flex-direction:column; border-left:1px solid var(--line); border-right:1px solid var(--line); color:var(--ink);}
+
+  .hd{background:var(--so); color:#fff; padding:13.5px 15.5px 11.5px;}
+  .hd .brand{font-size:11.5px; letter-spacing:.18em; opacity:.85;}
+  .hd .row{display:flex; align-items:center; justify-content:space-between; margin-top:2px;}
+  .hd .who{font-size:17.5px; font-weight:700;}
+  .hd .role{font-size:11.5px; background:rgba(255,255,255,.18); padding:2px 9.5px;}
+  .tgl-theme{border:1px solid rgba(255,255,255,.55); background:none; color:#fff;
+    font-size:11.5px; font-weight:700; padding:4px 9.5px; white-space:nowrap;}
+
+  main{flex:1; overflow-y:auto; padding-bottom:9.5px;}
+  .screen{display:none;} .screen.on{display:block;}
+  .sec{padding:13.5px 15.5px 4px;}
+  .label{font-size:12.5px; letter-spacing:.14em; color:var(--sub); font-weight:700; margin-bottom:6px;}
+  .card{background:var(--sfc); border:1px solid var(--line); margin-bottom:11.5px;}
+
+  /* ---- home ---- */
+  .stat3{display:flex; border:1px solid var(--line); background:var(--sfc); margin:13.5px 15.5px 2px;}
+  .stat3 > div{flex:1; text-align:center; padding:11.5px 4px; border-right:1px solid var(--line);}
+  .stat3 > div:last-child{border-right:none;}
+  .stat3 .n{font-size:22px; font-weight:700;}
+  .stat3 .n.red{color:var(--red-t);} .stat3 .n.amb{color:var(--amb-t);}
+  .stat3 .k{font-size:11.5px; color:var(--sub); margin-top:2px;}
+  .visit{display:flex; justify-content:space-between; align-items:center; padding:11.5px 13.5px; border-bottom:1px solid var(--line);}
+  .visit:last-child{border-bottom:none;}
+  .visit .nm{font-size:14.5px; font-weight:700;}
+  .visit .mt{font-size:12.5px; color:var(--sub); margin-top:2px;}
+  .visit .tm{font-size:14.5px; font-weight:700; color:var(--so-t);}
+  .cta{display:block; width:calc(100% - 28px); margin:9.5px 15.5px; padding:15.5px; border:none;
+    background:var(--so); color:#fff; font-size:16.5px; font-weight:700;}
+  .cta.ghost{background:var(--sfc); color:var(--so-t); border:1px solid var(--so);}
+
+  /* ---- store select ---- */
+  .search{margin:13.5px 15.5px 9.5px; display:flex; border:1px solid var(--line); background:var(--sfc);}
+  .search input{flex:1; border:none; padding:11.5px 13.5px; font-size:14.5px; background:none; color:var(--ink);}
+  .store{padding:12.5px 13.5px; border-bottom:1px solid var(--line);}
+  .store:last-child{border-bottom:none;}
+  .store .r1{display:flex; justify-content:space-between; align-items:center;}
+  .store .nm{font-size:14.5px; font-weight:700;}
+  .store .mt{display:flex; gap:11.5px; font-size:12.5px; color:var(--sub); margin-top:4px; flex-wrap:wrap;}
+  .pill{font-size:11.5px; font-weight:700; padding:2px 7px; color:#fff; white-space:nowrap;}
+  .pill.bad{background:var(--red);} .pill.warn{background:var(--amber);} .pill.ok{background:var(--so);}
+  .go{font-size:13.5px; font-weight:700; color:var(--so-t); white-space:nowrap;}
+
+  /* ---- checklist ---- */
+  .chd{background:var(--sfc); border-bottom:1px solid var(--line); padding:11.5px 15.5px;
+    display:flex; justify-content:space-between; align-items:center;}
+  .chd .st-nm{font-size:15.5px; font-weight:700;}
+  .chd .st-mt{font-size:11.5px; color:var(--sub); margin-top:2px;}
+  .prog{font-size:12.5px; font-weight:700; color:var(--so-t);}
+  .pbar{height:4px; background:var(--track);}
+  .pbar i{display:block; height:100%; width:66%; background:var(--so);}
+  .prev{border-left:4px solid var(--amber); padding:11.5px 13.5px;}
+  .prev .t{font-size:12.5px; font-weight:700; color:var(--amb-t);}
+  .prev .tx{font-size:13.5px; margin-top:4px; line-height:1.5;}
+  .q-item{padding:12.5px 13.5px; border-bottom:1px solid var(--line);}
+  .q-item:last-child{border-bottom:none;}
+  .q-item .qq{font-size:14.5px; font-weight:700; line-height:1.45;}
+  .q-item .qm{font-size:11.5px; color:var(--sub); margin-top:2px;}
+  .chips{display:flex; gap:6px; margin-top:9.5px;}
+  .chips button{flex:1; height:34px; border:1px solid var(--line); background:var(--sfc); font-size:14.5px; color:var(--ink);}
+  .chips button.on{background:var(--so); border-color:var(--so); color:#fff; font-weight:700;}
+  .chips button.on.low{background:var(--red); border-color:var(--red);}
+  .fb{margin-top:9.5px; border:1px solid var(--red); background:var(--ambbg); padding:9.5px 11.5px;}
+  .fb .t{font-size:12.5px; font-weight:700; color:var(--red-t);}
+  .fb textarea{width:100%; border:1px solid var(--line); background:var(--sfc); color:var(--ink);
+    padding:9.5px; font-size:14.5px; margin-top:6px; min-height:120px; line-height:1.6; resize:vertical;}
+  .fb .tgl{display:flex; justify-content:space-between; align-items:center; margin-top:9.5px; font-size:13.5px; font-weight:700;}
+  .sw{width:44px; height:24px; border:1px solid var(--so); background:var(--so); position:relative;}
+  .sw i{position:absolute; top:2px; right:2px; width:19.5px; height:19.5px; background:#fff;}
+  .sw.off{background:var(--sfc); border-color:var(--line);}
+  .sw.off i{left:2px; right:auto; background:var(--sub);}
+  .photo{border:1px dashed var(--sub); color:var(--sub); text-align:center; padding:13.5px 9.5px; font-size:13.5px; margin-top:9.5px;}
+  .note{font-size:11.5px; color:var(--sub); text-align:center; padding:6px 15.5px 11.5px; line-height:1.6;}
+
+  /* ---- approve / comm ---- */
+  .task{padding:13.5px;}
+  .task .hd2{display:flex; justify-content:space-between; gap:9.5px; align-items:flex-start;}
+  .task .ti{font-size:14.5px; font-weight:700; line-height:1.45;}
+  .meta{display:flex; gap:13.5px; font-size:12.5px; color:var(--sub); margin-top:6px; flex-wrap:wrap;}
+  .meta b{color:var(--ink);}
+  .evi{border:1px solid var(--line); background:var(--bg); font-size:12.5px; color:var(--sub);
+    padding:15.5px 9.5px; text-align:center; margin-top:9.5px;}
+  .btns{display:flex; gap:9.5px; margin-top:11.5px;}
+  .btns button{flex:1; padding:11.5px 4px; font-size:13.5px; font-weight:700; border:1px solid var(--so); background:var(--sfc); color:var(--so-t);}
+  .btns button.fill{background:var(--so); color:#fff;}
+  .btns button.back{border-color:var(--red); color:var(--red-t);}
+  .th{display:flex; gap:9.5px; padding:11.5px 13.5px; border-bottom:1px solid var(--line);}
+  .th:last-child{border-bottom:none;}
+  .th .av{width:28px; height:28px; background:var(--ss); color:#fff; font-size:12.5px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .th.me .av{background:var(--so);}
+  .th .bx{flex:1;}
+  .th .who{font-size:11.5px; color:var(--sub);}
+  .th .tx{font-size:13.5px; line-height:1.55; margin-top:2px;}
+
+  /* ---- bottom nav + black band ---- */
+  .nav-wrap{position:sticky; bottom:0;}
+  nav{display:flex; background:var(--sfc); border-top:1px solid var(--line);}
+  nav button{flex:1; padding:14px 0 12px; border:none; background:none; color:var(--sub); font-size:13px; font-weight:700;}
+  nav button svg{display:block; margin:0 auto 4px; width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7;}
+  nav button.on{color:var(--so-t);}
+  .band{height:calc(11.5px + env(safe-area-inset-bottom)); background:#111;}
+</style>
+</head>
+<body>
+<div class=&quot;phone&quot;>
+
+  <div class=&quot;hd&quot;>
+    <div class=&quot;brand&quot;>SMART ORDER ｜ FC統合運営基盤</div>
+    <div class=&quot;row&quot;>
+      <div class=&quot;who&quot;>佐藤（SV）</div>
+      <div style=&quot;display:flex; align-items:center; gap:9.5px;&quot;>
+        <button class=&quot;tgl-theme&quot; onclick=&quot;toggleTheme()&quot;>☾ ダーク</button>
+        <div class=&quot;role&quot;>担当 12店舗</div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ===== SV HOME ===== -->
+    <section class=&quot;screen on&quot; id=&quot;scr-home&quot;>
+      <div class=&quot;stat3&quot;>
+        <div><div class=&quot;n&quot;>2</div><div class=&quot;k&quot;>本日の訪問</div></div>
+        <div><div class=&quot;n amb&quot;>3</div><div class=&quot;k&quot;>承認待ち</div></div>
+        <div><div class=&quot;n red&quot;>7</div><div class=&quot;k&quot;>担当店の<br>期限超過</div></div>
+      </div>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>本日の訪問予定（8/19 水）</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;visit&quot;>
+            <div><div class=&quot;nm&quot;>旗の台店</div><div class=&quot;mt&quot;>前回 8/12 ｜ 未完了課題 2（超過1）</div></div>
+            <div class=&quot;tm&quot;>10:30</div>
+          </div>
+          <div class=&quot;visit&quot;>
+            <div><div class=&quot;nm&quot;>大森町店</div><div class=&quot;mt&quot;>前回 8/5 ｜ 売上低迷フラグ</div></div>
+            <div class=&quot;tm&quot;>14:00</div>
+          </div>
+        </div>
+      </div>
+      <button class=&quot;cta&quot; onclick=&quot;go('store')&quot;>訪問チェックを開始する</button>
+      <button class=&quot;cta ghost&quot; onclick=&quot;go('appr')&quot;>承認待ちを確認する（3）</button>
+    </section>
+
+    <!-- ===== STORE SELECT ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-store&quot;>
+      <div class=&quot;search&quot;><input placeholder=&quot;担当店舗を検索（12店）&quot;></div>
+      <div class=&quot;sec&quot; style=&quot;padding-top:0&quot;>
+        <div class=&quot;label&quot;>訪問する店舗を選択</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;store&quot; onclick=&quot;go('check')&quot;>
+            <div class=&quot;r1&quot;><span class=&quot;nm&quot;>旗の台店</span><span class=&quot;go&quot;>チェック開始 →</span></div>
+            <div class=&quot;mt&quot;><span>QSC 3.2</span><span>前回 8/12</span><span class=&quot;pill bad&quot;>超過1</span><span class=&quot;pill warn&quot;>本日訪問</span></div>
+          </div>
+          <div class=&quot;store&quot; onclick=&quot;go('check')&quot;>
+            <div class=&quot;r1&quot;><span class=&quot;nm&quot;>大森町店</span><span class=&quot;go&quot;>チェック開始 →</span></div>
+            <div class=&quot;mt&quot;><span>QSC 3.5</span><span>前回 8/5</span><span class=&quot;pill warn&quot;>売上低迷</span></div>
+          </div>
+          <div class=&quot;store&quot;>
+            <div class=&quot;r1&quot;><span class=&quot;nm&quot;>蒲田西口店</span><span class=&quot;go&quot;>チェック開始 →</span></div>
+            <div class=&quot;mt&quot;><span>QSC 2.9</span><span>前回 7/30</span><span class=&quot;pill warn&quot;>QSC未提出</span></div>
+          </div>
+          <div class=&quot;store&quot;>
+            <div class=&quot;r1&quot;><span class=&quot;nm&quot;>武蔵小山店</span><span class=&quot;go&quot;>チェック開始 →</span></div>
+            <div class=&quot;mt&quot;><span>QSC 4.3</span><span>前回 8/7</span><span class=&quot;pill ok&quot;>正常</span></div>
+          </div>
+          <div class=&quot;store&quot;>
+            <div class=&quot;r1&quot;><span class=&quot;nm&quot;>六郷土手店</span><span class=&quot;go&quot;>チェック開始 →</span></div>
+            <div class=&quot;mt&quot;><span>QSC 3.7</span><span>前回 8/14</span><span class=&quot;pill ok&quot;>正常</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CHECKLIST ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-check&quot;>
+      <div class=&quot;chd&quot;>
+        <div>
+          <div class=&quot;st-nm&quot;>旗の台店 ― SV訪問チェック</div>
+          <div class=&quot;st-mt&quot;>チェックリスト：週次QSC v3.1（本部設定）｜ 8/19 10:34</div>
+        </div>
+        <div class=&quot;prog&quot;>8 / 12 項目</div>
+      </div>
+      <div class=&quot;pbar&quot;><i></i></div>
+
+      <div class=&quot;sec&quot;>
+        <div class=&quot;card prev&quot;>
+          <div class=&quot;t&quot;>前回指摘（8/12・佐藤）</div>
+          <div class=&quot;tx&quot;>温度記録の未記入 → 是正タスクNo.128（期限超過中）。本日、現地で改善状況を確認。</div>
+        </div>
+
+        <div class=&quot;label&quot;>Q：品質・味</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;>
+            <div class=&quot;qq&quot;>1. 豚の盛付量が規定どおりである（並120g／大盛180g）</div>
+            <div class=&quot;qm&quot;>配点 5 ｜ 現地で2杯を計量確認 ｜ 3点以下はコメント必須</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button class=&quot;on&quot;>4</button><button>5</button></div>
+          </div>
+          <div class=&quot;q-item&quot;>
+            <div class=&quot;qq&quot;>2. たれの計量（1杯40ml）・照りが基準写真どおりである</div>
+            <div class=&quot;qm&quot;>配点 5</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button>4</button><button class=&quot;on&quot;>5</button></div>
+          </div>
+        </div>
+
+        <div class=&quot;label&quot;>C：清潔・衛生</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;>
+            <div class=&quot;qq&quot;>3. 豚肉の保管温度（4℃以下）・冷蔵庫の温度記録が毎日記入されている</div>
+            <div class=&quot;qm&quot;>配点 5 ｜ 写真必須 ｜ 3点以下はコメント必須</div>
+            <div class=&quot;chips&quot;><button>1</button><button class=&quot;on low&quot;>2</button><button>3</button><button>4</button><button>5</button></div>
+            <div class=&quot;fb&quot;>
+              <div class=&quot;t&quot;>評点 2 ― コメント必須・店舗へのフィードバック対象項目です</div>
+              <textarea>8/17・8/18が未記入。記録表を扉に移設したが記入が定着していない。開店前チェックリストへ組込みを再指示。</textarea>
+              <div class=&quot;tgl&quot;><span>この項目を店舗へフィードバックする（改善タスク化）</span><div class=&quot;sw&quot;><i></i></div></div>
+              <div class=&quot;tgl&quot; style=&quot;font-weight:400; color:var(--sub); font-size:12.5px;&quot;><span>→ No.128に追記して期限を再設定（8/23）</span></div>
+            </div>
+            <div class=&quot;photo&quot;>＋ 現地写真を添付（必須・撮影済み 1枚）</div>
+          </div>
+          <div class=&quot;q-item&quot;>
+            <div class=&quot;qq&quot;>4. スライサー・まな板の生肉／野菜区分と消毒ができている</div>
+            <div class=&quot;qm&quot;>配点 5</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button>3</button><button class=&quot;on&quot;>4</button><button>5</button></div>
+          </div>
+        </div>
+
+        <div class=&quot;label&quot;>S：サービス</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;q-item&quot;>
+            <div class=&quot;qq&quot;>5. 提供時間（券売機発券から5分以内）を守れている</div>
+            <div class=&quot;qm&quot;>配点 5 ｜ フィードバック要求可</div>
+            <div class=&quot;chips&quot;><button>1</button><button>2</button><button class=&quot;on&quot;>3</button><button>4</button><button>5</button></div>
+            <div class=&quot;fb&quot;>
+              <div class=&quot;t&quot;>評点 3 ― コメント必須</div>
+              <textarea>ピーク帯で6分超が2件。動線見直し（トッピング位置）を店長と現地確認済み。</textarea>
+              <div class=&quot;tgl&quot;><span>この項目を店舗へフィードバックする（改善タスク化）</span><div class=&quot;sw off&quot;><i></i></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class=&quot;cta&quot;>点検結果を送信する（本部・店舗へ共有）</button>
+      <div class=&quot;note&quot;>送信すると、フィードバックONの項目は責任者・期限付きの改善タスクとして店舗に届き、本部にはチェックリスト版数付きで記録されます。</div>
+    </section>
+
+    <!-- ===== APPROVE / COMM ===== -->
+    <section class=&quot;screen&quot; id=&quot;scr-appr&quot;>
+      <div class=&quot;sec&quot;>
+        <div class=&quot;label&quot;>完了申請の承認（3件）</div>
+        <div class=&quot;card task&quot;>
+          <div class=&quot;hd2&quot;><div class=&quot;ti&quot;>旗の台店 No.128 冷蔵庫の温度記録</div><span class=&quot;pill warn&quot;>承認待ち</span></div>
+          <div class=&quot;meta&quot;><span>申請 8/19 09:12</span><span>責任者 <b>店長</b></span><span>証跡 写真2枚</span></div>
+          <div class=&quot;evi&quot;>［証跡写真：記録表（8/19時点・全日記入済）］タップで拡大</div>
+          <div class=&quot;btns&quot;><button class=&quot;back&quot;>差戻し</button><button class=&quot;fill&quot;>承認して完了にする</button></div>
+        </div>
+        <div class=&quot;card task&quot;>
+          <div class=&quot;hd2&quot;><div class=&quot;ti&quot;>六郷土手店 No.125 ダスター交換頻度</div><span class=&quot;pill warn&quot;>承認待ち</span></div>
+          <div class=&quot;meta&quot;><span>申請 8/18 17:40</span><span>証跡 写真1枚</span></div>
+          <div class=&quot;btns&quot;><button class=&quot;back&quot;>差戻し</button><button class=&quot;fill&quot;>承認して完了にする</button></div>
+        </div>
+
+        <div class=&quot;label&quot;>本部との連絡（項目スレッド）</div>
+        <div class=&quot;card&quot;>
+          <div class=&quot;th&quot;>
+            <div class=&quot;av&quot;>本部</div>
+            <div class=&quot;bx&quot;><div class=&quot;who&quot;>本部・品質管理 ｜ 8/19 11:02 ｜ 旗の台店・項目3</div>
+              <div class=&quot;tx&quot;>温度記録の件、3週連続の指摘です。次回訪問で改善が見られない場合、臨店同行を設定します。</div></div>
+          </div>
+          <div class=&quot;th me&quot;>
+            <div class=&quot;av&quot;>佐藤</div>
+            <div class=&quot;bx&quot;><div class=&quot;who&quot;>SV佐藤 ｜ 8/19 11:15</div>
+              <div class=&quot;tx&quot;>承知しました。開店前チェックへの組込みを本日再指示済み。8/23に電話確認、8/26訪問で最終確認します。</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style=&quot;height:9.5px&quot;></div>
+  </main>
+
+  <div class=&quot;nav-wrap&quot;>
+    <nav>
+      <button class=&quot;on&quot; data-s=&quot;home&quot; onclick=&quot;go('home')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M3 11 12 4l9 7&quot;/><path d=&quot;M5 10v10h14V10&quot;/></svg>ホーム</button>
+      <button data-s=&quot;store&quot; onclick=&quot;go('store')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M4 9l1-5h14l1 5&quot;/><path d=&quot;M5 9v11h14V9&quot;/><path d=&quot;M9 20v-6h6v6&quot;/></svg>店舗</button>
+      <button data-s=&quot;check&quot; onclick=&quot;go('check')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M9 5h6v3H9z&quot;/><path d=&quot;M15 6h3v14H6V6h3&quot;/><path d=&quot;M9 13l2 2 4-4&quot;/></svg>チェック</button>
+      <button data-s=&quot;appr&quot; onclick=&quot;go('appr')&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><circle cx=&quot;12&quot; cy=&quot;8&quot; r=&quot;3.4&quot;/><path d=&quot;M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5&quot;/></svg>承認</button>
+    </nav>
+    <div class=&quot;band&quot;></div>
+  </div>
+</div>
+
+<script>
+function toggleTheme(){
+  const r=document.documentElement;
+  const dark = r.getAttribute('data-theme')==='dark';
+  if(dark){ r.removeAttribute('data-theme'); } else { r.setAttribute('data-theme','dark'); }
+  document.querySelectorAll('.tgl-theme').forEach(b=>b.textContent = dark ? '☾ ダーク' : '☀ ライト');
+}
+function go(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+  document.getElementById('scr-'+s).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.s===s));
+  document.querySelector('main').scrollTop=0; window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
+"></iframe>
+  <iframe id="f3" srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;>
+<title>FC統合運営基盤 本部・SV（レスポンシブ）</title>
+<style>
+  :root{
+    --so:#1F1F1D; --ss:#3A3936; --amber:#8A8781; --red:#B3261E; --bar:#B0AEA7; --barcur:#1A1A1A;
+    --ink:#1A1A1A; --sub:#666; --line:#D6D4CE; --bg:#F2F1ED; --sfc:#FBFAF7;
+    --headbg:#E9E8E3; --ambbg:#EFEEE8; --ssbg:#ECEBE6; --track:#E5E4DE;
+    --so-t:#1A1A1A; --ss-t:#4A4843; --amb-t:#6B6963; --red-t:#B3261E;
+    color-scheme: light;
+  }
+  :root[data-theme=&quot;dark&quot;]{
+      --ink:#EFEBE0; --sub:#A9A18D; --line:#46402F; --bg:#23201A; --sfc:#2C2921;
+      --frame:#181613; --headbg:#2C332A; --ambbg:#3A311C; --ssbg:#262B26; --track:#3B352A;
+      --so-t:#E8E6E0; --ss-t:#C9C7C0; --amb-t:#B9B7B0; --red-t:#F09287;
+      --so:#55534C; --ss:#66645C; --amber:#7A7871; --bar:#5F5D55; --barcur:#EFEBE0;
+      color-scheme: dark;
+  }
+  *{box-sizing:border-box; border-radius:0; margin:0; padding:0;
+    font-family:&quot;Hiragino Kaku Gothic ProN&quot;,&quot;Yu Gothic&quot;,Meiryo,sans-serif;}
+  html{background:var(--bg);}
+  body{background:var(--bg); color:var(--ink); min-height:100vh; display:flex;}
+
+  /* ---------- sidebar ---------- */
+  aside{width:212px; background:var(--so); color:#fff; flex-shrink:0; min-height:100vh;}
+  aside .logo{padding:19.5px 17.5px 15.5px; border-bottom:1px solid rgba(255,255,255,.25);}
+  aside .logo .b{font-size:16.5px; font-weight:700; letter-spacing:.06em;}
+  aside .logo .s{font-size:11.5px; letter-spacing:.16em; opacity:.8; margin-top:2px;}
+  aside .menu button{display:block; width:100%; text-align:left; padding:12.5px 17.5px;
+    background:none; border:none; color:rgba(255,255,255,.85); font-size:14.5px; border-left:4px solid transparent;}
+  aside .menu button.on{background:rgba(255,255,255,.12); color:#fff; font-weight:700; border-left-color:#fff;}
+  aside .menu .grp{font-size:11.5px; letter-spacing:.14em; color:rgba(255,255,255,.55); padding:13.5px 17.5px 4px;}
+  aside .menu .dis{color:rgba(255,255,255,.4); font-size:13.5px; padding:10.5px 17.5px;}
+
+  .wrap{flex:1; min-width:0; background:var(--bg);}
+  .top{background:var(--sfc); border-bottom:1px solid var(--line); padding:11.5px 22px;
+    display:flex; justify-content:space-between; align-items:center; gap:9.5px; flex-wrap:wrap;}
+  .top .t{font-size:16.5px; font-weight:700;}
+  .top .u{font-size:13.5px; color:var(--sub);}
+  .top .u b{color:var(--ink);}
+  .top .u .ssref{color:var(--ss-t);}
+  .tgl-theme{border:1px solid var(--line); background:var(--sfc); color:var(--ink);
+    font-size:12.5px; font-weight:700; padding:6px 11.5px; white-space:nowrap; cursor:pointer;}
+  .page{padding:19.5px 22px 40px; display:none; background:var(--bg);}
+  .page.on{display:block;}
+  .label{font-size:12.5px; letter-spacing:.14em; color:var(--sub); font-weight:700; margin:17.5px 0 6px;}
+
+  /* ---------- kpi ---------- */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:11.5px;}
+  .kpi{background:var(--sfc); border:1px solid var(--line); border-top:3px solid var(--so); padding:13.5px 15.5px;}
+  .kpi.warn{border-top-color:var(--amber);} .kpi.bad{border-top-color:var(--red);}
+  .kpi .k{font-size:12.5px; color:var(--sub);}
+  .kpi .v{font-size:24px; font-weight:700; margin-top:2px;}
+  .kpi .v small{font-size:13.5px; color:var(--sub); font-weight:400;}
+  .kpi .d{font-size:12.5px; margin-top:2px; color:var(--sub);}
+  .kpi .d.up{color:var(--so-t); font-weight:700;} .kpi .d.dn{color:var(--red-t); font-weight:700;}
+
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; background:var(--sfc); border:1px solid var(--line); font-size:13.5px;}
+  th{background:var(--headbg); color:var(--ink); text-align:left; padding:9.5px 11.5px; border:1px solid var(--line); font-size:12.5px;}
+  td{padding:9.5px 11.5px; border:1px solid var(--line); vertical-align:middle;}
+  td.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tr.hl td{background:var(--ambbg);}
+  .st{font-size:11.5px; font-weight:700; color:#fff; padding:2px 7px; white-space:nowrap; display:inline-block;}
+  .st.ok{background:var(--so);} .st.warn{background:var(--amber);} .st.bad{background:var(--red);}
+  .st.ss{background:var(--ss);} .st.gray{background:var(--sub);}
+  .diff-up{color:var(--amb-t); font-weight:700;} .diff-0{color:var(--sub);}
+  .req{color:var(--so-t); font-weight:700;} .noreq{color:var(--sub);}
+
+  .cols{display:grid; grid-template-columns:3fr 2fr; gap:15.5px;}
+
+  /* ---------- charts (tap/hover詳細は必須) ---------- */
+  .bars{display:flex; align-items:flex-end; gap:6px; height:130px; padding:26px 13.5px 4px;
+    background:var(--sfc); border:1px solid var(--line);}
+  .bars .b{flex:1; background:var(--bar); position:relative; cursor:pointer;}
+  .bars .b.cur{background:var(--barcur);}
+  .bars .b i{position:absolute; bottom:-19.5px; left:0; right:0; text-align:center;
+    font-size:10.5px; color:var(--sub); font-style:normal;}
+  .bars .b::after{content:attr(data-v); position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    background:#111; color:#fff; border:1px solid var(--line); font-size:11.5px; font-weight:700;
+    padding:2px 6px; white-space:nowrap; opacity:0; pointer-events:none; z-index:5;}
+  .bars .b:hover::after, .bars .b:focus-visible::after, .bars .b.show::after{opacity:1;}
+  .bars .b:focus-visible{outline:2px solid var(--amber);}
+  .bars-cap{font-size:11.5px; color:var(--sub); padding:22px 2px 0; line-height:1.6;}
+  .hint{font-size:11.5px; color:var(--sub);}
+
+  .qsc-row{display:flex; align-items:center; gap:9.5px; padding:7px 11.5px; background:var(--sfc);
+    border:1px solid var(--line); border-top:none; font-size:13.5px;}
+  .qsc-row:first-of-type{border-top:1px solid var(--line);}
+  .qsc-row .nm{width:96px; flex-shrink:0;}
+  .qsc-row .tr2{flex:1; height:15.5px; background:var(--track); position:relative; cursor:pointer;}
+  .qsc-row .tr2 i{position:absolute; left:0; top:0; bottom:0; background:var(--bar);}
+  .qsc-row.low .tr2 i{background:var(--red);}
+  .qsc-row .tr2::after{content:attr(data-v); position:absolute; top:-24px; left:0;
+    background:#111; color:#fff; border:1px solid var(--line); font-size:11.5px; font-weight:700;
+    padding:2px 6px; white-space:nowrap; opacity:0; pointer-events:none; z-index:5;}
+  .qsc-row .tr2:hover::after, .qsc-row .tr2.show::after{opacity:1;}
+  .qsc-row .sc{width:34px; text-align:right; font-weight:700; flex-shrink:0;}
+
+  /* ---------- send panel ---------- */
+  .send{background:var(--sfc); border:1px solid var(--ss); border-left:4px solid var(--ss);
+    padding:15.5px; display:flex; justify-content:space-between; align-items:center; gap:15.5px; margin-top:15.5px; flex-wrap:wrap;}
+  .send .t{font-size:14.5px; font-weight:700; color:var(--ss-t);}
+  .send .d{font-size:12.5px; color:var(--sub); margin-top:3px; line-height:1.6;}
+  .btn{border:none; padding:12.5px 19.5px; font-size:14.5px; font-weight:700; color:#fff; background:var(--so); white-space:nowrap; cursor:pointer;}
+  .btn.ssb{background:var(--ss);}
+  .btn.ghost{background:var(--sfc); color:var(--so-t); border:1px solid var(--so);}
+
+  .filters{display:flex; gap:9.5px; margin-bottom:13.5px; flex-wrap:wrap;}
+  .filters .f{background:var(--sfc); border:1px solid var(--line); padding:9.5px 13.5px; font-size:13.5px;}
+  .filters .f b{color:var(--so-t);}
+
+  /* ---------- karte / settings ---------- */
+  .karte-hd{background:var(--sfc); border:1px solid var(--line); border-left:4px solid var(--so);
+    padding:15.5px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:9.5px;}
+  .karte-hd .nm{font-size:17.5px; font-weight:700;}
+  .karte-hd .mt{font-size:12.5px; color:var(--sub); margin-top:3px; line-height:1.6;}
+  .visits{background:var(--sfc); border:1px solid var(--line);}
+  .visits .v{padding:10.5px 13.5px; border-bottom:1px solid var(--line); font-size:13.5px; line-height:1.55;}
+  .visits .v:last-child{border-bottom:none;}
+  .visits .v b{color:var(--so-t);}
+  .flow{display:flex; gap:0; background:var(--sfc); border:1px solid var(--line); flex-wrap:wrap;}
+  .flow .s{flex:1; min-width:150px; padding:11.5px 13.5px; border-right:1px solid var(--line); font-size:12.5px; line-height:1.6;}
+  .flow .s:last-child{border-right:none;}
+  .flow .s b{display:block; font-size:13.5px; color:var(--so-t); margin-bottom:2px;}
+
+  /* ---------- mobile（横スクロール禁止：表はカード型へ再構成） ---------- */
+  .mnav-wrap{display:none; position:fixed; left:0; right:0; bottom:0; z-index:10;}
+  .mnav{display:flex; background:var(--sfc); border-top:1px solid var(--line);}
+  .mnav button{flex:1; padding:15px 2px 13px; border:none; background:none; color:var(--sub); font-size:13px; font-weight:700;}
+  .mnav button.on{color:var(--so-t); border-top:3px solid var(--so); margin-top:-1px;}
+  .band{height:calc(11.5px + env(safe-area-inset-bottom)); background:#111;}
+
+  @media (max-width:900px){ .kpis{grid-template-columns:1fr 1fr;} .cols{grid-template-columns:1fr;} aside{width:172px;} }
+  @media (max-width:760px){
+    aside{display:none;}
+    .mnav-wrap{display:block;}
+    .wrap{padding-bottom:calc(66px + env(safe-area-inset-bottom));}
+    .top{padding:11.5px 15.5px;}
+    .page{padding:15.5px 15.5px 30px;}
+    .kpis{gap:9.5px;}
+    .kpi .v{font-size:22px;}
+    /* 表 → カード型（横スクロールさせない） */
+    table, tbody, tr, td{display:block; width:100%;}
+    thead{display:none;}
+    table{border:none; background:none;}
+    tr{border:1px solid var(--line); background:var(--sfc); margin-bottom:9.5px;}
+    tr.hl{border-left:4px solid var(--amber);}
+    tr.hl td{background:var(--sfc);}
+    td{border:none; border-bottom:1px solid var(--line); display:flex; justify-content:space-between;
+      align-items:center; gap:11.5px; padding:9.5px 11.5px; text-align:right;}
+    td:last-child{border-bottom:none;}
+    td::before{content:attr(data-label); color:var(--sub); font-size:11.5px; font-weight:700;
+      text-align:left; flex-shrink:0;}
+    td:first-child{background:var(--headbg); font-weight:700; text-align:left; justify-content:flex-start;}
+    td:first-child::before{display:none;}
+    td.num{text-align:right;}
+    .send{flex-direction:column; align-items:stretch;}
+    .send .btn{width:100%;}
+    .flow .s{min-width:100%; border-right:none; border-bottom:1px solid var(--line);}
+    .flow .s:last-child{border-bottom:none;}
+    .qsc-row .nm{width:78px;}
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class=&quot;logo&quot;>
+    <div class=&quot;b&quot;>SMART ORDER</div>
+    <div class=&quot;s&quot;>FC統合運営基盤（本部・SV）</div>
+  </div>
+  <div class=&quot;menu&quot;>
+    <button class=&quot;on&quot; data-p=&quot;dash&quot; onclick=&quot;go('dash')&quot;>本部ダッシュボード</button>
+    <button data-p=&quot;agg&quot; onclick=&quot;go('agg')&quot;>注文集約・供給連携</button>
+    <button data-p=&quot;karte&quot; onclick=&quot;go('karte')&quot;>SV店舗カルテ</button>
+    <div class=&quot;grp&quot;>三者連携の設定</div>
+    <button data-p=&quot;cklst&quot; onclick=&quot;go('cklst')&quot;>チェックリスト設定</button>
+    <button data-p=&quot;svmgr&quot; onclick=&quot;go('svmgr')&quot;>SV管理・招待</button>
+    <div class=&quot;grp&quot;>既存機能（流用）</div>
+    <div class=&quot;dis&quot;>商品・価格マスタ</div>
+    <div class=&quot;dis&quot;>取引先・店舗管理</div>
+    <div class=&quot;dis&quot;>監査ログ（ポータル）</div>
+  </div>
+</aside>
+
+<div class=&quot;wrap&quot;>
+  <div class=&quot;top&quot;>
+    <div class=&quot;t&quot; id=&quot;ttl&quot;>本部ダッシュボード ― 8/19（水）</div>
+    <div style=&quot;display:flex; align-items:center; gap:13.5px; flex-wrap:wrap;&quot;>
+      <div class=&quot;u&quot;>テナント：<b>○○フーズ 本部</b> ｜ 本部管理者 ｜ <span class=&quot;ssref&quot;>連携先：マルエイフードテック（SMART STOCK）</span></div>
+      <button class=&quot;tgl-theme&quot; onclick=&quot;toggleTheme()&quot;>☾ ダーク</button>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div class=&quot;page on&quot; id=&quot;pg-dash&quot;>
+    <div class=&quot;kpis&quot;>
+      <div class=&quot;kpi&quot;><div class=&quot;k&quot;>本日の発注済店舗（8/21納品分）</div><div class=&quot;v&quot;>38<small> / 43店</small></div><div class=&quot;d&quot;>締切 15:00 ｜ 未発注5店に自動督促済</div></div>
+      <div class=&quot;kpi warn&quot;><div class=&quot;k&quot;>今週のQSC未提出</div><div class=&quot;v&quot;>5<small> 店</small></div><div class=&quot;d&quot;>提出期限 8/20（木）</div></div>
+      <div class=&quot;kpi bad&quot;><div class=&quot;k&quot;>期限超過の是正課題</div><div class=&quot;v&quot;>7<small> 件</small></div><div class=&quot;d dn&quot;>前週比 +2件</div></div>
+      <div class=&quot;kpi&quot;><div class=&quot;k&quot;>全店売上（前週比）</div><div class=&quot;v&quot;>+2.4<small> %</small></div><div class=&quot;d up&quot;>客数 +1.1% ／ 客単価 +1.3%</div></div>
+    </div>
+
+    <div class=&quot;label&quot;>要対応店舗（異常・期限超過）</div>
+    <div class=&quot;cols&quot;>
+      <table>
+        <thead><tr><th>店舗</th><th>事象</th><th>担当SV</th><th>状態</th></tr></thead>
+        <tbody>
+        <tr class=&quot;hl&quot;><td data-label=&quot;店舗&quot;>旗の台店</td><td data-label=&quot;事象&quot;>是正課題 期限超過2日（温度記録）</td><td data-label=&quot;担当SV&quot;>佐藤</td><td data-label=&quot;状態&quot;><span class=&quot;st bad&quot;>超過</span></td></tr>
+        <tr class=&quot;hl&quot;><td data-label=&quot;店舗&quot;>大森町店</td><td data-label=&quot;事象&quot;>売上 前年比 −12%（3週連続）</td><td data-label=&quot;担当SV&quot;>佐藤</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>低迷</span></td></tr>
+        <tr><td data-label=&quot;店舗&quot;>蒲田西口店</td><td data-label=&quot;事象&quot;>QSC未提出（2週連続）</td><td data-label=&quot;担当SV&quot;>田中</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>未提出</span></td></tr>
+        <tr><td data-label=&quot;店舗&quot;>川崎砂子店</td><td data-label=&quot;事象&quot;>発注量が販売実績比 +38%（過剰疑い）</td><td data-label=&quot;担当SV&quot;>田中</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>乖離</span></td></tr>
+        <tr><td data-label=&quot;店舗&quot;>武蔵小山店</td><td data-label=&quot;事象&quot;>本部要回答通知 期限当日未回答</td><td data-label=&quot;担当SV&quot;>鈴木</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>未回答</span></td></tr>
+        </tbody>
+      </table>
+      <div>
+        <div class=&quot;qsc-row low&quot;><span class=&quot;nm&quot;>蒲田西口店</span><div class=&quot;tr2&quot; data-v=&quot;2.9 ｜ Q3.4 / S3.1 / C2.2 ｜ 前月 3.3&quot; tabindex=&quot;0&quot;><i style=&quot;width:58%&quot;></i></div><span class=&quot;sc&quot;>2.9</span></div>
+        <div class=&quot;qsc-row low&quot;><span class=&quot;nm&quot;>旗の台店</span><div class=&quot;tr2&quot; data-v=&quot;3.2 ｜ Q3.8 / S3.4 / C2.4 ｜ 前月 3.6&quot; tabindex=&quot;0&quot;><i style=&quot;width:64%&quot;></i></div><span class=&quot;sc&quot;>3.2</span></div>
+        <div class=&quot;qsc-row&quot;><span class=&quot;nm&quot;>大森町店</span><div class=&quot;tr2&quot; data-v=&quot;3.5 ｜ Q3.6 / S3.2 / C3.7 ｜ 前月 3.5&quot; tabindex=&quot;0&quot;><i style=&quot;width:70%&quot;></i></div><span class=&quot;sc&quot;>3.5</span></div>
+        <div class=&quot;qsc-row&quot;><span class=&quot;nm&quot;>六郷土手店</span><div class=&quot;tr2&quot; data-v=&quot;3.7 ｜ Q3.9 / S3.5 / C3.7 ｜ 前月 3.4&quot; tabindex=&quot;0&quot;><i style=&quot;width:74%&quot;></i></div><span class=&quot;sc&quot;>3.7</span></div>
+        <div class=&quot;qsc-row&quot;><span class=&quot;nm&quot;>全店平均</span><div class=&quot;tr2&quot; data-v=&quot;4.1 ｜ Q4.2 / S4.0 / C4.1 ｜ 前月 4.0&quot; tabindex=&quot;0&quot;><i style=&quot;width:82%&quot;></i></div><span class=&quot;sc&quot;>4.1</span></div>
+        <div class=&quot;bars-cap&quot; style=&quot;padding-top:6px&quot;>QSCスコア下位店舗（5点満点・今月）<br><span class=&quot;hint&quot;>バーをタップ／ホバーでQ・S・C内訳と前月比を表示</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AGGREGATION ===== -->
+  <div class=&quot;page&quot; id=&quot;pg-agg&quot;>
+    <div class=&quot;filters&quot;>
+      <div class=&quot;f&quot;>納品日：<b>8/21（金）</b></div>
+      <div class=&quot;f&quot;>ブランド：全ブランド</div>
+      <div class=&quot;f&quot;>発注店舗：<b>38 / 43</b>（締切 15:00）</div>
+      <div class=&quot;f&quot;>最終集計：本日 14:02（自動）</div>
+    </div>
+
+    <table>
+      <thead><tr><th>品目</th><th>規格</th><th style=&quot;text-align:right&quot;>合計数量</th><th style=&quot;text-align:right&quot;>発注店舗数</th><th style=&quot;text-align:right&quot;>前回比差分</th><th>状態</th></tr></thead>
+      <tbody>
+      <tr><td data-label=&quot;品目&quot;>豚ローススライス 2mm</td><td data-label=&quot;規格&quot;>1kg×10</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>126</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>38</td><td class=&quot;num diff-up&quot; data-label=&quot;前回比差分&quot;>+9</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>確定</span></td></tr>
+      <tr><td data-label=&quot;品目&quot;>丼たれ（専用）</td><td data-label=&quot;規格&quot;>1.8L×6</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>44</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>31</td><td class=&quot;num diff-0&quot; data-label=&quot;前回比差分&quot;>±0</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>確定</span></td></tr>
+      <tr><td data-label=&quot;品目&quot;>精米 ゆめぴりか</td><td data-label=&quot;規格&quot;>10kg</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>81</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>36</td><td class=&quot;num diff-up&quot; data-label=&quot;前回比差分&quot;>+4</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>確定</span></td></tr>
+      <tr class=&quot;hl&quot;><td data-label=&quot;品目&quot;>玉ねぎ</td><td data-label=&quot;規格&quot;>10kg箱</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>57</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>29</td><td class=&quot;num diff-up&quot; data-label=&quot;前回比差分&quot;>+12</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>変更あり</span></td></tr>
+      <tr><td data-label=&quot;品目&quot;>丼容器 M（フタ付）</td><td data-label=&quot;規格&quot;>50個×4</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>63</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>27</td><td class=&quot;num diff-0&quot; data-label=&quot;前回比差分&quot;>±0</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>確定</span></td></tr>
+      <tr><td data-label=&quot;品目&quot;>紅生姜</td><td data-label=&quot;規格&quot;>1kg×10</td><td class=&quot;num&quot; data-label=&quot;合計数量&quot;>22</td><td class=&quot;num&quot; data-label=&quot;発注店舗数&quot;>18</td><td class=&quot;num diff-0&quot; data-label=&quot;前回比差分&quot;>−1</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>確定</span></td></tr>
+      </tbody>
+    </table>
+    <div style=&quot;font-size:12.5px;color:var(--sub);margin-top:6px;&quot;>行をタップで店舗別内訳・変更履歴を表示（品目×納品日×店舗）。締切後の変更は履歴付きで差分に反映。</div>
+
+    <div class=&quot;send&quot;>
+      <div>
+        <div class=&quot;t&quot;>SMART STOCK 連携 ― マルエイフードテック</div>
+        <div class=&quot;d&quot;>前回送信：8/19 06:00 自動（8/20納品分・成功） ｜ 失敗 0件 ｜ 送信方式：テナント連携＋CSV控え（メール併送）<br>本日15:00の締切後、8/21納品分を自動送信します。手動送信・再送もこの画面から実行できます。</div>
+      </div>
+      <div style=&quot;display:flex; gap:9.5px; flex-wrap:wrap;&quot;>
+        <button class=&quot;btn ghost&quot;>送信履歴</button>
+        <button class=&quot;btn ssb&quot;>SMART STOCKへ送信</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KARTE ===== -->
+  <div class=&quot;page&quot; id=&quot;pg-karte&quot;>
+    <div class=&quot;karte-hd&quot;>
+      <div>
+        <div class=&quot;nm&quot;>旗の台店（加盟）</div>
+        <div class=&quot;mt&quot;>運営：株式会社△△フードサービス ｜ 担当SV：佐藤 ｜ 発注締切 15:00 ｜ 前回訪問 8/12</div>
+      </div>
+      <div style=&quot;display:flex; gap:9.5px; flex-wrap:wrap;&quot;>
+        <span class=&quot;st bad&quot;>是正超過 1</span><span class=&quot;st warn&quot;>QSC 3.2</span><span class=&quot;st ok&quot;>発注 正常</span>
+      </div>
+    </div>
+
+    <div class=&quot;label&quot;>週次売上推移（直近12週・千円） <span class=&quot;hint&quot;>― 棒をタップ／ホバーで売上・客数・客単価を表示</span></div>
+    <div class=&quot;bars&quot;>
+      <div class=&quot;b&quot; style=&quot;height:72%&quot; data-v=&quot;6/1週 ¥612千 ｜ 客数 1,020 ｜ 客単価 ¥600&quot; tabindex=&quot;0&quot;><i>6/1</i></div>
+      <div class=&quot;b&quot; style=&quot;height:78%&quot; data-v=&quot;6/8週 ¥663千 ｜ 客数 1,092 ｜ 客単価 ¥607&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:70%&quot; data-v=&quot;6/15週 ¥595千 ｜ 客数 989 ｜ 客単価 ¥602&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:81%&quot; data-v=&quot;6/22週 ¥688千 ｜ 客数 1,128 ｜ 客単価 ¥610&quot; tabindex=&quot;0&quot;><i>6/22</i></div>
+      <div class=&quot;b&quot; style=&quot;height:76%&quot; data-v=&quot;6/29週 ¥646千 ｜ 客数 1,061 ｜ 客単価 ¥609&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:68%&quot; data-v=&quot;7/6週 ¥578千 ｜ 客数 952 ｜ 客単価 ¥607&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:62%&quot; data-v=&quot;7/13週 ¥527千 ｜ 客数 869 ｜ 客単価 ¥606&quot; tabindex=&quot;0&quot;><i>7/13</i></div>
+      <div class=&quot;b&quot; style=&quot;height:58%&quot; data-v=&quot;7/20週 ¥493千 ｜ 客数 815 ｜ 客単価 ¥605&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:55%&quot; data-v=&quot;7/27週 ¥468千 ｜ 客数 771 ｜ 客単価 ¥607&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b&quot; style=&quot;height:60%&quot; data-v=&quot;8/3週 ¥510千 ｜ 客数 842 ｜ 客単価 ¥606&quot; tabindex=&quot;0&quot;><i>8/3</i></div>
+      <div class=&quot;b&quot; style=&quot;height:57%&quot; data-v=&quot;8/10週 ¥485千 ｜ 客数 799 ｜ 客単価 ¥607&quot; tabindex=&quot;0&quot;></div>
+      <div class=&quot;b cur&quot; style=&quot;height:54%&quot; data-v=&quot;今週（集計中）¥459千 ｜ 客数 757 ｜ 客単価 ¥606&quot; tabindex=&quot;0&quot;><i>今週</i></div>
+    </div>
+    <div class=&quot;bars-cap&quot;>7月中旬から下降傾向。客数 −6%・客単価 ±0%（POS取込データ／Phase 2）。発注量は販売実績比 +8%。</div>
+
+    <div class=&quot;label&quot;>未完了課題・訪問履歴</div>
+    <div class=&quot;cols&quot;>
+      <table>
+        <thead><tr><th>No.</th><th>課題</th><th>責任者</th><th>期限</th><th>状態</th></tr></thead>
+        <tbody>
+        <tr class=&quot;hl&quot;><td data-label=&quot;No.&quot;>128</td><td data-label=&quot;課題&quot;>冷蔵庫内の温度記録が未実施</td><td data-label=&quot;責任者&quot;>店長</td><td data-label=&quot;期限&quot;>8/18</td><td data-label=&quot;状態&quot;><span class=&quot;st bad&quot;>超過2日</span></td></tr>
+        <tr><td data-label=&quot;No.&quot;>131</td><td data-label=&quot;課題&quot;>ダスターの交換頻度が基準未達</td><td data-label=&quot;責任者&quot;>ホール担当</td><td data-label=&quot;期限&quot;>8/25</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>対応中</span></td></tr>
+        <tr><td data-label=&quot;No.&quot;>119</td><td data-label=&quot;課題&quot;>券売機まわりのPOP剥がれ</td><td data-label=&quot;責任者&quot;>店長</td><td data-label=&quot;期限&quot;>8/10</td><td data-label=&quot;状態&quot;><span class=&quot;st gray&quot;>完了</span></td></tr>
+        </tbody>
+      </table>
+      <div class=&quot;visits&quot;>
+        <div class=&quot;v&quot;><b>8/12 定期訪問（佐藤）</b><br>温度記録の未記入を指摘→No.128起票。提供時間はピーク時6分、動線見直しを提案。次回8/26に改善確認。</div>
+        <div class=&quot;v&quot;><b>7/29 定期訪問（佐藤）</b><br>新人2名のオペレーション研修。盛付基準の再共有。</div>
+        <div class=&quot;v&quot;><b>7/15 臨店（本部同行）</b><br>売上低迷のヒアリング。近隣競合の出店影響を確認。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHECKLIST SETTINGS ===== -->
+  <div class=&quot;page&quot; id=&quot;pg-cklst&quot;>
+    <div class=&quot;karte-hd&quot;>
+      <div>
+        <div class=&quot;nm&quot;>週次QSCチェックリスト v3.1（適用中）</div>
+        <div class=&quot;mt&quot;>適用範囲：全43店舗 ｜ 実施周期：週次（店舗セルフ）＋SV訪問時 ｜ 改訂：8/1（v3.0→v3.1 項目3の写真を必須化）｜ 点検結果には使用版数を紐づけ</div>
+      </div>
+      <div style=&quot;display:flex; gap:9.5px; flex-wrap:wrap;&quot;>
+        <button class=&quot;btn ghost&quot;>改訂履歴</button>
+        <button class=&quot;btn&quot;>＋ 評価項目を追加</button>
+      </div>
+    </div>
+
+    <div class=&quot;label&quot;>評価項目（本部が設定 → SV・店舗の点検画面へ自動反映）</div>
+    <table>
+      <thead><tr><th>カテゴリ</th><th>設問</th><th>配点</th><th>写真</th><th>コメント必須条件</th><th>店舗へのFB要求</th><th>状態</th></tr></thead>
+      <tbody>
+      <tr><td data-label=&quot;カテゴリ&quot;>Q 品質・味</td><td data-label=&quot;設問&quot;>豚の盛付量が規定どおりである（並120g／大盛180g・計量確認）</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>任意</td><td data-label=&quot;コメント必須条件&quot;>3点以下で必須</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;req&quot;>可（SVが選択）</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;カテゴリ&quot;>Q 品質・味</td><td data-label=&quot;設問&quot;>たれの計量（1杯40ml）・照りが基準写真どおりである</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>―</td><td data-label=&quot;コメント必須条件&quot;>―</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;noreq&quot;>―</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;カテゴリ&quot;>Q 品質・味</td><td data-label=&quot;設問&quot;>ご飯の盛付量（並250g）と炊飯後の保温時間（2時間以内）を守っている</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>任意</td><td data-label=&quot;コメント必須条件&quot;>3点以下で必須</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;req&quot;>可（SVが選択）</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr class=&quot;hl&quot;><td data-label=&quot;カテゴリ&quot;>C 清潔・衛生</td><td data-label=&quot;設問&quot;>豚肉の保管温度（4℃以下）・冷蔵庫の温度記録が毎日記入されている</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;><b>必須</b></td><td data-label=&quot;コメント必須条件&quot;>3点以下で必須</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;req&quot;>必須（自動で改善タスク化）</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;カテゴリ&quot;>C 清潔・衛生</td><td data-label=&quot;設問&quot;>スライサー・まな板の生肉／野菜区分と洗浄消毒ができている</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>任意</td><td data-label=&quot;コメント必須条件&quot;>3点以下で必須</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;req&quot;>可（SVが選択）</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;カテゴリ&quot;>S サービス</td><td data-label=&quot;設問&quot;>提供時間（券売機発券から5分以内）を守れている</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>―</td><td data-label=&quot;コメント必須条件&quot;>3点以下で必須</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;req&quot;>可（SVが選択）</span></td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;カテゴリ&quot;>S サービス</td><td data-label=&quot;設問&quot;>接客用語・身だしなみが基準どおりである</td><td data-label=&quot;配点&quot; class=&quot;num&quot;>5</td><td data-label=&quot;写真&quot;>―</td><td data-label=&quot;コメント必須条件&quot;>―</td><td data-label=&quot;店舗へのFB要求&quot;><span class=&quot;noreq&quot;>―</span></td><td data-label=&quot;状態&quot;><span class=&quot;st gray&quot;>v3.2で改訂予定</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class=&quot;label&quot;>三者連携の流れ（この設定がどう使われるか）</div>
+    <div class=&quot;flow&quot;>
+      <div class=&quot;s&quot;><b>1) 本部</b>評価項目・配点・必須条件・FB要求を設定し版管理。SV登録・担当割当。</div>
+      <div class=&quot;s&quot;><b>2) SV</b>店舗を選択して評点。項目別コメント・写真、FB要求ON/OFF。</div>
+      <div class=&quot;s&quot;><b>3) 店舗</b>FB項目が責任者・期限付きの改善タスクとして届き、証跡を提出。</div>
+      <div class=&quot;s&quot;><b>4) 本部・SV</b>SV承認→完了。本部はスコア・改善日数をモニタリングし基準を改訂。</div>
+    </div>
+  </div>
+
+  <!-- ===== SV MANAGEMENT ===== -->
+  <div class=&quot;page&quot; id=&quot;pg-svmgr&quot;>
+    <div class=&quot;karte-hd&quot;>
+      <div>
+        <div class=&quot;nm&quot;>SVアカウント管理</div>
+        <div class=&quot;mt&quot;>登録フロー：メール招待 → SVが初回ログインでパスワード設定 → 担当店舗を割当 ｜ 退職・異動時は即時停止（監査ログに記録）</div>
+      </div>
+      <button class=&quot;btn&quot;>＋ SVをメールで招待</button>
+    </div>
+
+    <div class=&quot;label&quot;>登録済みSV（4名 ／ 招待中 1名）</div>
+    <table>
+      <thead><tr><th>SV</th><th>メール</th><th>担当店舗</th><th>今月の訪問</th><th>最終ログイン</th><th>状態</th></tr></thead>
+      <tbody>
+      <tr><td data-label=&quot;SV&quot;>佐藤 健</td><td data-label=&quot;メール&quot;>sato@example.co.jp</td><td data-label=&quot;担当店舗&quot; class=&quot;num&quot;>12店</td><td data-label=&quot;今月の訪問&quot; class=&quot;num&quot;>9件</td><td data-label=&quot;最終ログイン&quot;>本日 10:34</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;SV&quot;>田中 美咲</td><td data-label=&quot;メール&quot;>tanaka@example.co.jp</td><td data-label=&quot;担当店舗&quot; class=&quot;num&quot;>11店</td><td data-label=&quot;今月の訪問&quot; class=&quot;num&quot;>7件</td><td data-label=&quot;最終ログイン&quot;>本日 09:02</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;SV&quot;>鈴木 大輔</td><td data-label=&quot;メール&quot;>suzuki@example.co.jp</td><td data-label=&quot;担当店舗&quot; class=&quot;num&quot;>10店</td><td data-label=&quot;今月の訪問&quot; class=&quot;num&quot;>8件</td><td data-label=&quot;最終ログイン&quot;>8/18 16:45</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr><td data-label=&quot;SV&quot;>高橋 玲奈</td><td data-label=&quot;メール&quot;>takahashi@example.co.jp</td><td data-label=&quot;担当店舗&quot; class=&quot;num&quot;>10店</td><td data-label=&quot;今月の訪問&quot; class=&quot;num&quot;>6件</td><td data-label=&quot;最終ログイン&quot;>8/17 11:20</td><td data-label=&quot;状態&quot;><span class=&quot;st ok&quot;>有効</span></td></tr>
+      <tr class=&quot;hl&quot;><td data-label=&quot;SV&quot;>（新任SV）</td><td data-label=&quot;メール&quot;>new-sv@example.co.jp</td><td data-label=&quot;担当店舗&quot; class=&quot;num&quot;>未割当</td><td data-label=&quot;今月の訪問&quot; class=&quot;num&quot;>―</td><td data-label=&quot;最終ログイン&quot;>―</td><td data-label=&quot;状態&quot;><span class=&quot;st warn&quot;>招待中（8/18送信・再送可）</span></td></tr>
+      </tbody>
+    </table>
+    <div style=&quot;font-size:12.5px;color:var(--sub);margin-top:6px;&quot;>行をタップで担当店舗の割当変更・権限（点検・承認・閲覧）の調整・アカウント停止。全操作はポータル監査ログに記録されます。</div>
+  </div>
+</div>
+
+<div class=&quot;mnav-wrap&quot;>
+  <nav class=&quot;mnav&quot;>
+    <button class=&quot;on&quot; data-p=&quot;dash&quot; onclick=&quot;go('dash')&quot;>ダッシュ<br>ボード</button>
+    <button data-p=&quot;agg&quot; onclick=&quot;go('agg')&quot;>注文<br>集約</button>
+    <button data-p=&quot;karte&quot; onclick=&quot;go('karte')&quot;>店舗<br>カルテ</button>
+    <button data-p=&quot;cklst&quot; onclick=&quot;go('cklst')&quot;>チェック<br>リスト</button>
+    <button data-p=&quot;svmgr&quot; onclick=&quot;go('svmgr')&quot;>SV<br>管理</button>
+  </nav>
+  <div class=&quot;band&quot;></div>
+</div>
+
+<script>
+const titles={
+  dash:'本部ダッシュボード ― 8/19（水）',
+  agg:'注文集約・供給連携 ― 納品日 8/21（金）',
+  karte:'SV店舗カルテ ― 旗の台店',
+  cklst:'チェックリスト設定（評価項目マスタ）',
+  svmgr:'SV管理・招待'
+};
+function toggleTheme(){
+  const r=document.documentElement;
+  const dark = r.getAttribute('data-theme')==='dark';
+  if(dark){ r.removeAttribute('data-theme'); } else { r.setAttribute('data-theme','dark'); }
+  document.querySelectorAll('.tgl-theme').forEach(b=>b.textContent = dark ? '☾ ダーク' : '☀ ライト');
+}
+function go(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  document.querySelectorAll('aside .menu button').forEach(b=>b.classList.toggle('on', b.dataset.p===p));
+  document.querySelectorAll('.mnav button').forEach(b=>b.classList.toggle('on', b.dataset.p===p));
+  document.getElementById('ttl').textContent=titles[p];
+  window.scrollTo(0,0);
+}
+/* グラフはタップでも詳細表示（モバイル必須要件） */
+document.querySelectorAll('.bars .b, .qsc-row .tr2').forEach(el=>{
+  el.addEventListener('click', (e)=>{
+    const was = el.classList.contains('show');
+    document.querySelectorAll('.show').forEach(x=>x.classList.remove('show'));
+    if(!was) el.classList.add('show');
+    e.stopPropagation();
+  });
+});
+document.addEventListener('click', ()=>document.querySelectorAll('.show').forEach(x=>x.classList.remove('show')));
+</script>
+</body>
+</html>
+"></iframe>
+<script>
+function sw(id){
+  document.querySelectorAll('iframe').forEach(f=>f.classList.toggle('on', f.id===id));
+}
+</script>
+</body>
+</html>
