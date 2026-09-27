@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>商品BOM構成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --base:#F2F2EF; --panel:#FFFFFF; --panel2:#F7F7F5; --row:#FFFFFF;
+  --ink:#222222; --muted:#767672; --line:#E2E2DE; --hair:#ECECE8;
+  --green:#2E9E6B; --amber:#E8923A; --red:#D9534F;
+  --onacc:#FFFFFF; --sel:#EAF6EF; --dupbg:#FFF6E8; --focus:#2E9E6B;
+  --navy:#2E9E6B; --c-pr:#2E9E6B; --c-raw:#222; --c-im:#222; --c-pm:#222; --c-pk:#222;
+  --t-pr:#EAF6EF; --t-raw:#F7F7F5; --t-im:#F7F7F5; --t-pm:#F7F7F5; --t-pk:#F7F7F5;
+  --r:10px;
+  --font:"M PLUS Rounded 1c","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;background:var(--base)}
+body{margin:0;background:var(--base);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid rgba(46,158,107,.35);outline-offset:1px}
+.num{font-variant-numeric:tabular-nums}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.hide{display:none!important}
+.app{display:flex;flex-direction:column;height:100%;min-height:0;background:var(--base)}
+
+/* ===== top ===== */
+.top{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+.top-in{padding:12px 18px 10px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:17px;font-weight:800}
+.brand .sub{font-size:12px;color:var(--muted)}
+.tools{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mode{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.navrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.views{display:flex;gap:4px;background:var(--panel2);padding:4px;border-radius:999px}
+.views button{background:none;border:none;padding:6px 16px;border-radius:999px;color:var(--muted);font-weight:500}
+.views button[aria-selected="true"]{background:var(--ink);color:#fff;font-weight:700}
+.progress{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:220px;flex:0 1 360px}
+.progress .pt{white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px;font-weight:500}
+.pbar{flex:1;height:10px;background:var(--panel2);border-radius:999px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.pbar i{position:absolute;inset:0 auto 0 0;background:var(--green);display:block;border-radius:999px;transition:width .4s ease}
+
+/* ===== buttons/fields ===== */
+.fld{background:var(--row);border:1.5px solid var(--line);border-radius:8px;padding:7px 11px;width:100%}
+.fld:focus{border-color:var(--green)}
+select.fld{padding:6px 8px}
+.btn{background:var(--row);border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;white-space:nowrap;font-weight:500}
+.btn:hover{background:var(--panel2)}
+.btn.pri,.btn.nv{background:var(--green);border-color:var(--green);color:var(--onacc);font-weight:700}
+.btn.pri:hover,.btn.nv:hover{filter:brightness(1.06)}
+.btn.sm{padding:4px 11px;font-size:12px}
+.btn[disabled]{opacity:.4;cursor:default}
+.chk{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1.5px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--row)}
+.chk input{margin:0;accent-color:var(--green);width:15px;height:15px}
+.pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;font-weight:700;white-space:nowrap}
+.pill.ok{background:var(--sel);color:var(--green)}.pill.todo{background:var(--dupbg);color:#B96F1E}.pill.no{background:var(--panel2);color:var(--muted)}
+
+/* ===== main ===== */
+.main{flex:1 1 auto;min-height:0;overflow:auto;background:var(--base)}
+.wrap{padding:16px 18px 48px;max-width:1360px;margin:0 auto}
+
+/* product nav */
+.pnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pnav .find{position:relative;flex:1 1 260px;max-width:460px}
+.pnav .pos{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;font-weight:500}
+
+/* ===== tree (simple) ===== */
+.tree{position:relative}
+.root{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:14px}
+.root .rh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.root h2{margin:4px 0 0;font-size:22px;font-weight:800}
+.root .rm{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:4px}
+.stub{display:none}
+.branches{display:flex;align-items:flex-start;gap:12px}
+.col{flex:1 1 0;min-width:0;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px}
+.col.im{flex:1.7 1 0}
+.col.raw{flex:1.15 1 0}
+.colh{display:flex;align-items:center;gap:8px;padding:2px 2px 8px;border-bottom:2px solid var(--ink);margin-bottom:8px}
+.colh .cn{font-weight:800;font-size:15px}
+.colh .cc{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;color:var(--muted)}
+.lane{display:flex;flex-direction:column;gap:6px}
+.node{background:var(--row);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
+.node.pop{animation:pop .25s ease-out}
+.node .nn{display:flex;align-items:center;gap:6px}
+.node .name{font-weight:700;font-size:15px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node .nq{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px}
+.node .nq .qu{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.node .nq .fi{flex:1 1 90px;min-width:90px;max-width:180px}
+.node .nq input{border:1.5px solid var(--line);border-radius:8px;background:var(--row);padding:3px 7px;min-width:0}
+.node .nq input:focus{border-color:var(--green)}
+.node .nq .qi{width:62px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.node .nq .ui{width:70px;padding:3px 4px}
+.node .nq select{border:1.5px solid var(--line);border-radius:8px;background:var(--row)}
+
+.node .nq .ul{color:var(--muted);font-size:11px}
+.ico{border:none;background:none;color:var(--muted);padding:2px 6px;line-height:1;border-radius:999px;font-size:13px}
+.ico:hover{color:var(--red);background:#FDECEC}
+.addn{border:1.5px dashed var(--line);border-radius:10px;color:var(--muted);background:transparent;padding:8px 12px;text-align:left;width:100%;font-weight:600}
+.addn:hover{background:var(--panel2);color:var(--ink);border-color:var(--ink)}
+.node.im{background:var(--panel2)}
+.node.im .sub{margin-top:8px}
+.node.im .sub .branches{flex-direction:column;gap:8px}
+.node.im .sub .col{background:var(--row);padding:8px;border-radius:10px;flex:none;width:100%}
+.node.im .sub .colh{border-bottom-width:1.5px;padding-bottom:6px;margin-bottom:6px}
+.node.im .sub .colh .cn{font-size:13px}
+.node.deep{padding:6px 10px}
+.node.deep .name{font-size:14px}
+.sublbl{font-size:11px;color:var(--muted);font-weight:700;margin-top:8px}
+
+/* entry form */
+.entry{background:var(--row);border:1.5px solid var(--ink);border-radius:10px;padding:10px;position:relative}
+.entry .er{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.entry .fld{width:auto;flex:1 1 120px;min-width:0}
+.entry .fld.sm{flex:0 0 74px}
+.entry .equ{display:inline-flex;gap:4px;flex-wrap:nowrap;align-items:center}
+.entry .equ .fld.sm{flex:0 0 auto;width:74px}
+.entry select.fld.sm,.entry .equ select.fld.sm{flex:0 0 auto;width:96px;padding:6px 6px}
+.entry .fld.md{flex:0 0 92px}
+.entry .eb{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.entry .hint{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.sug{position:absolute;left:10px;right:10px;top:100%;margin-top:4px;background:var(--row);border:1.5px solid var(--line);border-radius:10px;z-index:20;max-height:min(60vh,520px);overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.sug button{display:flex;gap:8px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--hair);padding:8px 12px}
+.sug button:last-child{border-bottom:none}
+.sug button.on,.sug button:hover{background:var(--sel)}
+.sug .sc{font-size:10px;color:var(--muted);letter-spacing:.04em;min-width:64px;padding-top:3px}
+.sug .sn{flex:1;font-weight:500}
+.sug .ss{color:var(--muted);font-size:11px}
+.sug .new{color:var(--green);font-weight:700}
+
+/* same-name group */
+.same{margin:14px 0 0;border-radius:10px;background:var(--dupbg);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px}
+
+/* expansion */
+.exp{margin-top:20px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.exp h3{margin:0;padding:11px 14px;border-bottom:1px solid var(--hair);font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.exp .qtyin{width:80px;text-align:right;padding:4px 8px;background:var(--row);border:1.5px solid var(--line);border-radius:8px;font-variant-numeric:tabular-nums;font-weight:700}
+.exp .note{padding:9px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--hair)}
+.alert{margin-top:12px;padding:10px 14px;border-radius:10px;color:#B23B3B;background:#FDECEC}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:var(--row);table-layout:fixed}
+table.wexp{min-width:700px}
+table.wbuy{min-width:1000px}
+table.wim{min-width:700px}
+table.wpr{min-width:980px}
+thead th{position:sticky;top:0;z-index:5;background:var(--panel2);text-align:left;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);padding:8px 10px;white-space:nowrap}
+tbody td{border-bottom:1px solid var(--hair);padding:6px 10px;vertical-align:middle}
+tbody tr:hover{background:#FAFAF8}
+tbody tr.dup{background:var(--dupbg)}
+td.c{text-align:center}
+td.r{text-align:right}
+td input{width:100%;background:transparent;border:1.5px solid transparent;border-radius:8px;padding:4px 7px;min-width:0}
+td input:focus{background:var(--row);border-color:var(--green)}
+td.mono input{font-variant-numeric:tabular-nums}
+td.rr input{text-align:right;font-variant-numeric:tabular-nums}
+.empty{padding:48px 16px;text-align:center;color:var(--muted)}
+.empty div+div{margin-top:6px;font-size:12px}
+
+/* ===== map ===== */
+.mapbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-left:auto}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:4px;vertical-align:-1px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:8px}
+.tile{background:var(--row);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;text-align:left;min-height:60px}
+.tile:hover{background:var(--panel2)}
+.tile.s1{border-color:var(--amber)}
+.tile.s2{border-color:var(--green);background:var(--sel)}
+.tile.cur{outline:3px solid rgba(34,34,34,.25)}
+.tile .tc{font-size:10px;color:var(--muted);letter-spacing:.04em;display:flex;gap:6px}
+.tile .tn{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .ts{font-size:11px;color:var(--muted)}
+
+/* ===== masters ===== */
+.tabs{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;background:var(--panel2);padding:4px;border-radius:999px;width:max-content;max-width:100%}
+.tabs button{background:none;border:none;border-radius:999px;padding:6px 14px;color:var(--muted);white-space:nowrap;font-weight:500}
+.tabs button[aria-selected="true"]{background:var(--ink);color:#fff;font-weight:700}
+.bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.bar .grow{flex:1 1 200px;min-width:0;max-width:440px}
+.bar select.fld{width:auto;flex:0 0 auto}
+.quick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;margin-bottom:12px}
+.quick .fld{width:auto;flex:0 1 auto}
+.quick .fld.name{flex:1 1 220px;max-width:420px}
+.quick .fld.short{width:100px}
+.quick .k{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.more{display:block;width:100%;margin-top:10px;padding:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;color:var(--muted)}
+
+/* ===== modal / toast ===== */
+.ov{position:fixed;inset:0;background:rgba(40,40,30,.45);display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;z-index:60;overflow:auto}
+.modal{background:var(--base);border-radius:14px;width:100%;max-width:760px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.modal header h2{margin:0;font-size:15px;font-weight:800;flex:1}
+.modal .body{padding:18px}
+.modal footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.drop{border:2px dashed var(--line);border-radius:10px;background:var(--panel);padding:20px;text-align:center;color:var(--muted)}
+.drop.hot{border-color:var(--green);background:var(--sel);color:var(--ink)}
+textarea.paste{width:100%;height:110px;background:var(--row);border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:12px;resize:vertical}
+.maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:4px}
+.maps label{display:block}.maps span{display:block;margin-bottom:2px;font-size:12px}
+.sum{margin-top:12px;padding:10px 12px;background:var(--panel);border-radius:10px}
+.sum b{font-variant-numeric:tabular-nums}
+.errs{margin-top:8px;max-height:130px;overflow:auto;font-size:11px;color:var(--red)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:#222;color:#fff;padding:10px 18px;border-radius:999px;z-index:80;font-size:12px;max-width:90vw}
+
+@keyframes slidein{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.tree.anim{animation:slidein .18s ease-out}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:900px){
+  .entry .er .fld:first-child{flex:1 1 100%}
+  .branches{flex-direction:column;gap:10px;align-items:stretch}
+  .col{width:100%}
+  .wrap{padding:12px 12px 40px}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="top-in">
+      <div class="brand">
+        <h1>商品BOM構成</h1>
+        <span class="tools">
+          <span class="mode">自動保存（このブラウザ）</span>
+          <button class="btn sm" type="button" id="btnSave">作業ファイルを保存</button>
+          <button class="btn sm" type="button" id="btnOpen">開く</button>
+          <input type="file" id="openFile" accept=".json" class="hide">
+        </span>
+      </div>
+      <div class="navrow">
+        <div class="views" role="tablist" id="views"></div>
+        <div class="progress"><span class="pt" id="ptext"></span><div class="pbar"><i id="pbar" style="width:0"></i></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+<div id="layer"></div>
+
+<script>
+"use strict";
+(function(){
+var DIV=["原料","加工食材","資材","中間品","商品"];
+var PREFIX={"原料":"RM","加工食材":"PM","資材":"PK","中間品":"IM","商品":"BP"};
+var PAD={"原料":4,"加工食材":4,"資材":4,"中間品":4,"商品":6};
+var BUY={"原料":1,"加工食材":1,"資材":1,"中間品":0,"商品":0};
+var CC={"商品":"var(--c-pr)","原料":"var(--c-raw)","中間品":"var(--c-im)","加工食材":"var(--c-pm)","資材":"var(--c-pk)"};
+var TT={"商品":"var(--t-pr)","原料":"var(--t-raw)","中間品":"var(--t-im)","加工食材":"var(--t-pm)","資材":"var(--t-pk)"};
+var BR={"商品":["原料","中間品","加工食材","資材"],"中間品":["加工食材","資材"]};
+var ICON={"商品":"🥗","原料":"🥬","中間品":"🥡","加工食材":"🧀","資材":"📦"};
+var UNITS={"原料":["g","kg","個","玉","束","本","袋","枚","ml","L"],"加工食材":["g","kg","ml","L","個","枚","本","袋","パック"],"資材":["個","枚","本","m","cm","cm²","m²","袋","ケース","巻"],"中間品":["個","パック","袋","g","kg","ml"],"商品":["個","パック","袋","ケース","g","kg"]};
+function unitList(div){var base=(UNITS[div]||UNITS["資材"]).slice();(S.units[div]||[]).forEach(function(u){if(base.indexOf(u)<0)base.push(u);});return base;}
+function registerUnit(div,u){u=String(u||"").trim();if(!u)return;if((UNITS[div]||[]).indexOf(u)>=0)return;if(!S.units[div])S.units[div]=[];if(S.units[div].indexOf(u)<0){S.units[div].push(u);lsSave();}}
+function unitSelect(div,cur,cls,id){
+  var sel=el("select",cls);if(id)sel.id=id;
+  var list=unitList(div);if(cur&&list.indexOf(cur)<0)list.unshift(cur);
+  var o0=el("option",null,"単位");o0.value="";if(!cur)o0.selected=true;sel.appendChild(o0);
+  list.forEach(function(u){var o=el("option",null,u);o.value=u;if(u===cur)o.selected=true;sel.appendChild(o);});
+  var on=el("option",null,"その他（記入）…");on.value="__new__";sel.appendChild(on);
+  var prev=cur||"";
+  sel.addEventListener("change",function(e){
+    if(sel.value!=="__new__"){prev=sel.value;return;}
+    e.stopImmediatePropagation();
+    var inp=el("input","fld ui-new");inp.placeholder="単位を記入";inp.style.width="90px";
+    sel.classList.add("hide");sel.insertAdjacentElement("afterend",inp);inp.focus();
+    var done=false;
+    function finish(ok){
+      if(done)return;done=true;
+      var v=inp.value.trim();inp.remove();sel.classList.remove("hide");
+      if(ok&&v){
+        registerUnit(div,v);
+        var has=false;for(var i=0;i<sel.options.length;i++)if(sel.options[i].value===v)has=true;
+        if(!has){var o=el("option",null,v);o.value=v;sel.insertBefore(o,on);}
+        sel.value=v;prev=v;sel.dispatchEvent(new Event("change"));
+      }else{sel.value=prev;}
+      sel.focus();
+    }
+    inp.onkeydown=function(ev){if(ime(ev))return;if(ev.key==="Enter"){ev.preventDefault();ev.stopPropagation();finish(true);}if(ev.key==="Escape"){ev.preventDefault();ev.stopPropagation();finish(false);}};
+    inp.onblur=function(){setTimeout(function(){finish(true);},0);};
+  });
+  return sel;
+}
+function splitQty(v){var m=String(v||"").trim().match(/^([0-9０-９.．,]+)\s*([^0-9０-９.．,\s].*)?$/);if(!m)return {q:String(v||"").trim(),u:""};var q=m[1].replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/．/g,".").replace(/,/g,"");return {q:q,u:(m[2]||"").trim()};}
+var MAXDEPTH=12;
+
+var S={view:"tree",cur:null,items:new Map(),bom:new Map(),open:null,qty:100,
+       mtab:"原料",q:"",dupOnly:false,todoOnly:false,limit:200,mapF:"all",
+       focusId:null,anim:false,unitMem:{},units:{}};
+
+/* ===== utils ===== */
+function ime(e){return !!(e&&(e.isComposing||e.keyCode===229));}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function colg(ws){var g=document.createElement("colgroup");ws.forEach(function(w){var c=document.createElement("col");if(w)c.style.width=w+"px";g.appendChild(c);});return g;}
+function norm(s){
+  if(!s)return "";
+  s=String(s).replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0);});
+  s=s.replace(/[ァ-ヶ]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0x60);});
+  return s.toLowerCase().replace(/[\s　\-ー－_,.、。()（）\/]/g,"");
+}
+function nn(v){var n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isFinite(n)?n:0;}
+function fmt(n){if(!isFinite(n))return "0";return (Math.round(n*1000)/1000).toLocaleString("ja-JP",{maximumFractionDigits:3});}
+var toastT=null;
+function toast(m){
+  var old=document.getElementById("toast");if(old)old.remove();
+  var t=el("div","toast",m);t.id="toast";document.body.appendChild(t);
+  clearTimeout(toastT);toastT=setTimeout(function(){t.remove();},2400);
+}
+
+/* ===== persistence ===== */
+function lsLoad(){
+  try{
+    var raw=localStorage.getItem("vpq.master");
+    if(raw){var j=JSON.parse(raw);(j.items||[]).forEach(function(r){S.items.set(r.id,migrate(r));});(j.bom||[]).forEach(function(r){S.bom.set(r.id,r);});if(j.units)S.units=j.units;}
+    var ui=localStorage.getItem("vpq.ui");
+    if(ui){var u=JSON.parse(ui);if(u.cur&&S.items.has(u.cur))S.cur=u.cur;if(u.view)S.view=u.view;if(u.qty)S.qty=u.qty;}
+  }catch(e){}
+}
+function migrate(r){
+  if(r.div==="完成品")r.div="商品";
+  if(r.div==="加工形態")r.div="原料";
+  if(DIV.indexOf(r.div)<0)r.div="原料";
+  return r;
+}
+function lsSave(){
+  try{
+    localStorage.setItem("vpq.master",JSON.stringify({items:Array.from(S.items.values()),bom:Array.from(S.bom.values()),units:S.units}));
+    localStorage.setItem("vpq.ui",JSON.stringify({cur:S.cur,view:S.view,qty:S.qty}));
+  }catch(e){}
+}
+function commit(coll,rows){var m=coll==="items"?S.items:S.bom;rows.forEach(function(r){m.set(r.id,r);});render();lsSave();}
+function removeRows(coll,ids){var m=coll==="items"?S.items:S.bom;ids.forEach(function(id){m.delete(id);});render();lsSave();}
+var saveT=null;
+function queueSave(coll,row){(coll==="items"?S.items:S.bom).set(row.id,row);clearTimeout(saveT);saveT=setTimeout(lsSave,400);}
+function dl(name,text,type){
+  var blob=new Blob([text],{type:type||"text/csv;charset=utf-8"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+function stamp(){var d=new Date(),z=function(n){return String(n).padStart(2,"0");};return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+"_"+z(d.getHours())+z(d.getMinutes());}
+function saveWork(){
+  dl("BOM作業_"+stamp()+".json",JSON.stringify({app:"vpq-master",v:3,saved:new Date().toISOString(),
+    items:Array.from(S.items.values()),bom:Array.from(S.bom.values()),units:S.units}),"application/json");
+  toast("作業ファイルを保存しました");
+}
+function openWork(file){
+  var fr=new FileReader();
+  fr.onload=function(){
+    var j;try{j=JSON.parse(String(fr.result));}catch(e){toast("作業ファイルを読めませんでした");return;}
+    if(!j||!Array.isArray(j.items)){toast("作業ファイルの形式が違います");return;}
+    var ov=el("div","ov");ov.id="ov";
+    var m=el("div","modal");m.style.maxWidth="440px";
+    var hd=el("header");hd.appendChild(el("h2",null,"作業ファイルを開く"));m.appendChild(hd);
+    var body=el("div","body");
+    body.appendChild(el("div",null,"マスタ "+j.items.length+" 件、構成 "+(j.bom||[]).length+" 行"));
+    var when=j.saved?new Date(j.saved):null;
+    if(when&&!isNaN(when)){var w=el("div",null,"保存日時 "+when.toLocaleString("ja-JP"));w.style.color="var(--muted)";w.style.fontSize="12px";body.appendChild(w);}
+    m.appendChild(body);
+    var ft=el("footer");
+    var c=el("button","btn","キャンセル");c.onclick=closeModal;
+    var rep=el("button","btn","置き換える");rep.onclick=function(){S.items=new Map();S.bom=new Map();S.cur=null;applyWork(j);closeModal();toast("置き換えました");};
+    var mer=el("button","btn pri","今のデータに統合");mer.onclick=function(){applyWork(j);closeModal();toast("統合しました");};
+    ft.appendChild(c);ft.appendChild(rep);ft.appendChild(mer);m.appendChild(ft);ov.appendChild(m);
+    ov.onclick=function(e){if(e.target===ov)closeModal();};
+    document.getElementById("layer").appendChild(ov);
+  };
+  fr.readAsText(file,"UTF-8");
+}
+function applyWork(j){
+  (j.items||[]).forEach(function(r){if(r&&r.id)S.items.set(r.id,migrate(r));});
+  (j.bom||[]).forEach(function(l){if(l&&l.id)S.bom.set(l.id,l);});
+  if(j.units){Object.keys(j.units).forEach(function(d){(j.units[d]||[]).forEach(function(u){registerUnit(d,u);});});}
+  render();lsSave();
+}
+
+/* ===== derived ===== */
+function byCode(){var m=new Map();S.items.forEach(function(r){if(r.code)m.set(String(r.code).trim(),r);});return m;}
+function childrenOf(pid){var out=[];S.bom.forEach(function(l){if(l.p===pid)out.push(l);});out.sort(function(a,b){return (a.seq||0)-(b.seq||0);});return out;}
+function bomCount(pid){var n=0;S.bom.forEach(function(l){if(l.p===pid)n++;});return n;}
+function nextCode(div){
+  var p=PREFIX[div],w=PAD[div],max=0;
+  S.items.forEach(function(r){var c=String(r.code||"");if(c.indexOf(p+"-")===0){var n=parseInt(c.slice(p.length+1),10);if(n>max)max=n;}});
+  return function(){max++;return p+"-"+String(max).padStart(w,"0");};
+}
+function findByName(div,name){
+  var n=norm(name);if(!n)return null;var hit=null;
+  S.items.forEach(function(r){if(hit||r.div!==div)return;if(norm(r.name)===n||(r.code&&norm(r.code)===n))hit=r;});
+  return hit;
+}
+function newItem(div,name,spec,unit){
+  var r={id:uid("i"),code:nextCode(div)(),name:name||"",kana:"",jan:"",div:div,spec:spec||"",unit:unit||"",punit:"",conv:"",supplier:"",note:"",ok:false,done:false};
+  S.items.set(r.id,r);return r;
+}
+function countDiv(d){var n=0;S.items.forEach(function(r){if(r.div===d)n++;});return n;}
+function products(){
+  var out=[];S.items.forEach(function(r){if(r.div==="商品")out.push(r);});
+  out.sort(function(a,b){var ac=String(a.code||"~~~"),bc=String(b.code||"~~~");if(ac!==bc)return ac<bc?-1:1;return String(a.name||"").localeCompare(String(b.name||""));});
+  return out;
+}
+function status(p){if(p.done)return 2;return bomCount(p.id)?1:0;}
+function statusName(s){return ["未着手","途中","完了"][s];}
+function sameGroup(p){
+  var n=norm(p.name),j=String(p.jan||"").replace(/\D/g,""),out=[];
+  if(!n&&!j)return out;
+  S.items.forEach(function(r){if(r.div!=="商品"||r.id===p.id)return;if((n&&norm(r.name)===n)||(j&&String(r.jan||"").replace(/\D/g,"")===j))out.push(r);});
+  return out;
+}
+function dupKeys(){
+  var byName=new Map(),byJan=new Map(),dup=new Set();
+  S.items.forEach(function(r){
+    if(r.div!=="商品")return;
+    var n=norm(r.name);if(n){if(!byName.has(n))byName.set(n,[]);byName.get(n).push(r.id);}
+    var j=String(r.jan||"").replace(/\D/g,"");if(j){if(!byJan.has(j))byJan.set(j,[]);byJan.get(j).push(r.id);}
+  });
+  [byName,byJan].forEach(function(m){m.forEach(function(ids){if(ids.length>1)ids.forEach(function(i){dup.add(i);});});});
+  return dup;
+}
+
+/* ===== expansion ===== */
+function expand(rootId,qty){
+  var need=new Map(),inter=new Map(),errs=[];
+  function acc(m,ch,q,u){var k=ch.id+"|"+u,e=m.get(k);if(e)e.qty+=q;else m.set(k,{item:ch,qty:q,unit:u});}
+  function walk(pid,mult,path,depth){
+    if(depth>MAXDEPTH){errs.push("階層が深すぎます（"+MAXDEPTH+"段で打ち切り）");return;}
+    childrenOf(pid).forEach(function(l){
+      var ch=S.items.get(l.c);if(!ch)return;
+      var q=mult*nn(l.qty)*(nn(l.loss)||1),u=(l.unit||ch.unit||"").trim();
+      if(path.indexOf(ch.id)>=0){errs.push("循環参照: "+(ch.name||ch.code));return;}
+      if(ch.div==="中間品"){acc(inter,ch,q,u);walk(ch.id,q,path.concat([ch.id]),depth+1);}else acc(need,ch,q,u);
+    });
+  }
+  walk(rootId,qty,[rootId],1);
+  var sf=function(a,b){var d=DIV.indexOf(a.item.div)-DIV.indexOf(b.item.div);if(d)return d;return String(a.item.code||"").localeCompare(String(b.item.code||""));};
+  return {need:Array.from(need.values()).sort(sf),inter:Array.from(inter.values()).sort(sf),errs:errs};
+}
+
+/* ===== render ===== */
+var rafT=null;
+function render(){if(rafT)return;rafT=requestAnimationFrame(function(){rafT=null;draw();});}
+function draw(){
+  var focus=grabFocus();
+  drawTop();
+  var main=document.getElementById("main");main.textContent="";
+  if(S.view==="tree")drawTree(main);else if(S.view==="map")drawMap(main);else drawMasters(main);
+  restoreFocus(focus);
+  if(S.focusId){var f=document.getElementById(S.focusId);S.focusId=null;if(f){f.focus();}}
+}
+function grabFocus(){var a=document.activeElement;if(!a||!a.dataset||!a.dataset.f)return null;return {id:a.dataset.rid,f:a.dataset.f,s:a.selectionStart,e:a.selectionEnd};}
+function restoreFocus(f){
+  if(!f)return;var n=document.querySelector('[data-rid="'+f.id+'"][data-f="'+f.f+'"]');if(!n)return;
+  n.focus();try{if(f.s!=null&&n.setSelectionRange)n.setSelectionRange(f.s,f.e);}catch(e){}
+}
+function drawTop(){
+  var v=document.getElementById("views");v.textContent="";
+  [["tree","引き当て"],["map","全体マップ"],["masters","マスタ取込"]].forEach(function(x){
+    var b=el("button",null,x[1]);b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-selected",S.view===x[0]?"true":"false");
+    b.onclick=function(){S.view=x[0];S.open=null;render();lsSave();};v.appendChild(b);
+  });
+  var ps=products(),done=0,mid=0;ps.forEach(function(p){var s=status(p);if(s===2)done++;else if(s===1)mid++;});
+  document.getElementById("ptext").textContent=ps.length?("完了 "+done+" / "+ps.length+"　途中 "+mid):"商品 0 件";
+  document.getElementById("pbar").style.width=(ps.length?Math.round(done/ps.length*100):0)+"%";
+}
+
+/* ===== TREE VIEW ===== */
+function drawTree(main){
+  var wrap=el("div","wrap");
+  var ps=products();
+  if(!ps.length){
+    var e=el("div","empty");e.style.paddingTop="24px";
+    var drop=el("div","drop");drop.style.maxWidth="760px";drop.style.margin="0 auto";drop.style.padding="26px 20px";
+    drop.appendChild(el("div",null,"商品リスト（CSV／Excel）をここにドロップ"));
+    var pick=el("button","btn pri","ファイルを選ぶ");pick.style.marginTop="10px";
+    var fi=el("input");fi.type="file";fi.accept=".xlsx,.xls,.csv,.txt";fi.className="hide";
+    fi.onchange=function(){if(fi.files[0]){openImport("商品");readFile(fi.files[0]);}};
+    pick.onclick=function(){fi.click();};
+    drop.appendChild(pick);drop.appendChild(fi);
+    drop.ondragover=function(ev){ev.preventDefault();drop.classList.add("hot");};
+    drop.ondragleave=function(){drop.classList.remove("hot");};
+    drop.ondrop=function(ev){ev.preventDefault();drop.classList.remove("hot");if(ev.dataTransfer.files[0]){openImport("商品");readFile(ev.dataTransfer.files[0]);}};
+    e.appendChild(drop);
+    var smp=sampleBlock("商品");smp.style.maxWidth="760px";smp.style.margin="18px auto 0";
+    e.appendChild(smp);
+    var or=el("div",null,"または1件ずつ作る");or.style.margin="22px 0 0";or.style.fontSize="12px";e.appendChild(or);
+    var qk=el("div","quick");qk.style.maxWidth="760px";qk.style.margin="8px auto 0";
+    qk.appendChild(el("span","k","商品"));
+    var nm=el("input","fld name");nm.id="newprod";nm.placeholder="商品名";
+    var un=unitSelect("商品","","fld short","newunit");
+    var go=el("button","btn pri","作成  ⏎");
+    function mk(){var n=nm.value.trim();if(!n){nm.focus();return;}var r=newItem("商品",n,"",un.value==="__new__"?"":un.value);S.cur=r.id;commit("items",[r]);}
+    [nm,un].forEach(function(i){i.onkeydown=function(ev){if(ime(ev))return;if(ev.key==="Enter"){ev.preventDefault();mk();}};});
+    go.onclick=mk;qk.appendChild(nm);qk.appendChild(un);qk.appendChild(go);
+    e.appendChild(qk);wrap.appendChild(e);main.appendChild(wrap);return;
+  }
+  var cur=S.items.get(S.cur);
+  if(!cur||cur.div!=="商品"){cur=null;for(var i=0;i<ps.length;i++){if(status(ps[i])!==2){cur=ps[i];break;}}if(!cur)cur=ps[0];S.cur=cur.id;}
+  var idx=ps.findIndex(function(p){return p.id===cur.id;});
+
+  /* nav */
+  var nav=el("div","pnav");
+  var prev=el("button","btn","← 前");prev.disabled=idx<=0;prev.onclick=function(){go(ps[idx-1].id);};
+  var find=el("div","find");
+  var fi=el("input","fld");fi.id="pfind";fi.placeholder="商品を探す（名前・コード・JAN）";fi.autocomplete="off";
+  var fs=el("div","sug hide");
+  fi.oninput=function(){
+    var q=norm(fi.value);fs.textContent="";
+    if(!q){fs.classList.add("hide");return;}
+    var hits=ps.filter(function(p){return norm([p.code,p.name,p.kana,p.jan].join(" ")).indexOf(q)>=0;}).slice(0,8);
+    if(!hits.length){fs.classList.add("hide");return;}
+    hits.forEach(function(p){
+      var b=el("button");b.type="button";
+      b.appendChild(el("span","sc",p.code||"—"));b.appendChild(el("span","sn",p.name||"（名称未設定）"));b.appendChild(el("span","ss",statusName(status(p))));
+      b.onmousedown=function(ev){ev.preventDefault();go(p.id);};fs.appendChild(b);
+    });
+    fs.classList.remove("hide");
+  };
+  fi.onkeydown=function(ev){if(ime(ev))return;if(ev.key==="Enter"){var b=fs.querySelector("button");if(b){ev.preventDefault();b.onmousedown(ev);}}if(ev.key==="Escape")fs.classList.add("hide");};
+  fi.onblur=function(){setTimeout(function(){fs.classList.add("hide");},150);};
+  find.appendChild(fi);find.appendChild(fs);
+  var pos=el("span","pos",(idx+1)+" / "+ps.length);
+  var later=el("button","btn","あとで");later.onclick=function(){nextAfter(idx,ps,false);};
+  var next=el("button","btn pri",cur.done?"次へ →":"完了して次へ →");
+  next.onclick=function(){if(!cur.done){var o=Object.assign({},cur);o.done=true;S.items.set(o.id,o);}nextAfter(idx,ps,!cur.done);};
+  nav.appendChild(prev);nav.appendChild(find);nav.appendChild(pos);nav.appendChild(later);nav.appendChild(next);
+  if(cur.done){var undo=el("button","btn sm","完了を取り消す");undo.onclick=function(){var o=Object.assign({},cur);o.done=false;commit("items",[o]);};nav.appendChild(undo);}
+  wrap.appendChild(nav);
+
+  /* tree */
+  var tree=el("div","tree"+(S.anim?" anim":""));S.anim=false;
+  var root=el("div","root");
+  var rh=el("div","rh");
+  rh.appendChild(el("span","lbl","商品　"+(cur.code||"未採番")));
+  var st=status(cur);rh.appendChild(el("span","pill "+(st===2?"ok":(st===1?"todo":"no")),statusName(st)));
+  root.appendChild(rh);
+  root.appendChild(el("h2",null,cur.name||"（名称未設定）"));
+  var rm=el("div","rm");
+  if(cur.unit)rm.appendChild(el("span",null,"販売単位 "+cur.unit));
+  if(cur.jan)rm.appendChild(el("span","num","JAN "+cur.jan));
+  root.appendChild(rm);
+  tree.appendChild(root);
+  tree.appendChild(branches(cur,0));
+  wrap.appendChild(tree);
+
+  var same=sameGroup(cur);
+  if(same.length){
+    var sm=el("div","same");
+    sm.appendChild(el("span",null,"同じ名前・JANの商品 "+same.length+" 件："+same.map(function(r){return r.code||"未採番";}).join("　")));
+    var cp=el("button","btn sm","この構成をコピー");
+    cp.onclick=function(){
+      var lines=childrenOf(cur.id),out=[],n=0;
+      same.forEach(function(r){if(bomCount(r.id))return;lines.forEach(function(l,i){out.push({id:uid("b"),p:r.id,c:l.c,qty:l.qty,unit:l.unit,form:l.form||"",loss:l.loss,note:l.note,seq:i+1});});n++;});
+      if(!out.length){toast("コピー先はすべて構成済みです");return;}
+      commit("bom",out);toast(n+" 件の商品に構成をコピーしました");
+    };
+    if(bomCount(cur.id))sm.appendChild(cp);
+    wrap.appendChild(sm);
+  }
+
+  /* expansion */
+  var lines=childrenOf(cur.id);
+  if(lines.length){
+    var r=expand(cur.id,S.qty||1);
+    if(r.errs.length){var a=el("div","alert");a.appendChild(el("div",null,"展開できない構成があります"));r.errs.slice(0,4).forEach(function(m){var dd=el("div",null,"・"+m);dd.style.fontSize="12px";a.appendChild(dd);});wrap.appendChild(a);}
+    var box=el("div","exp");
+    var h3=el("h3");h3.appendChild(el("span",null,"発注に展開"));
+    var qin=el("input","qtyin");qin.type="number";qin.min="1";qin.step="1";qin.value=S.qty;qin.id="expqty";
+    qin.oninput=function(){S.qty=Math.max(1,nn(qin.value)||1);render();};
+    h3.appendChild(qin);h3.appendChild(el("span",null,(cur.unit||"個")+" 受注したとき"));
+    box.appendChild(h3);
+    var t2=el("table","wexp");t2.appendChild(colg([90,0,110,70,140,96]));
+    var th=el("thead"),tr=el("tr");["区分","構成物","必要量","単位","仕入先","発注"].forEach(function(h){tr.appendChild(el("th",null,h));});th.appendChild(tr);t2.appendChild(th);
+    var tb=el("tbody");
+    r.need.concat(r.inter).forEach(function(x){
+      var row=el("tr");
+      var c1=el("td",null,x.item.div);c1.style.color=CC[x.item.div];c1.style.fontWeight="500";row.appendChild(c1);
+      row.appendChild(el("td",null,(x.item.code?x.item.code+"　":"")+(x.item.name||"")));
+      row.appendChild(el("td","r num",fmt(x.qty)));row.appendChild(el("td",null,x.unit||""));row.appendChild(el("td",null,x.item.supplier||""));
+      var bt=el("td");bt.appendChild(el("span","pill "+(BUY[x.item.div]?"ok":"todo"),BUY[x.item.div]?"発注する":"社内加工"));row.appendChild(bt);
+      tb.appendChild(row);
+    });
+    t2.appendChild(tb);var tw=el("div","tablewrap");tw.appendChild(t2);box.appendChild(tw);
+    if(r.inter.length)box.appendChild(el("div","note","中間品は社内で作るため発注しません。中間品の中身を展開した分が発注対象に含まれています。"));
+    wrap.appendChild(box);
+  }
+  main.appendChild(wrap);
+
+  function go(id){S.cur=id;S.open=null;S.anim=true;render();lsSave();}
+  function nextAfter(i,list,markDone){
+    var n=null;
+    for(var k=1;k<=list.length;k++){var c=list[(i+k)%list.length];if(status(c)!==2){n=c;break;}}
+    if(!n){toast("すべての商品が完了しています");render();lsSave();return;}
+    if(markDone)toast("完了　→ "+(n.name||n.code));
+    go(n.id);
+  }
+}
+function branches(parent,depth){
+  var host=el("div","branches");
+  BR[parent.div].forEach(function(d){
+    var col=el("div","col"+(d==="中間品"&&parent.div==="商品"?" im":"")+(d==="原料"?" raw":""));
+    col.style.setProperty("--cc",CC[d]);col.style.setProperty("--tint",TT[d]);
+    var lines=childrenOf(parent.id).filter(function(l){var c=S.items.get(l.c);return c&&c.div===d;});
+    var h=el("div","colh");h.appendChild(el("span","cn",d));
+    h.appendChild(el("span","cc",lines.length?String(lines.length):"—"));
+    col.appendChild(h);
+    var lane=el("div","lane");
+    lines.forEach(function(l){lane.appendChild(nodeEl(l,parent,depth));});
+    var isOpen=S.open&&S.open.p===parent.id&&S.open.d===d;
+    if(isOpen)lane.appendChild(entryForm(parent,d));
+    else{
+      var add=el("button","addn","＋ "+d+"を追加");add.type="button";
+      add.onclick=function(){S.open={p:parent.id,d:d};S.focusId="ename";render();};
+      lane.appendChild(add);
+    }
+    col.appendChild(lane);host.appendChild(col);
+  });
+  return host;
+}
+function nodeEl(l,parent,depth){
+  var it=S.items.get(l.c);
+  var n=el("div","node"+(it.div==="中間品"?" im":"")+(depth>0?" deep":"")+(S.lastLine===l.id?" pop":""));
+  if(S.lastLine===l.id)S.lastLine=null;
+  n.style.setProperty("--cc",CC[it.div]);
+  var nn_=el("div","nn");
+  var nm=el("span","name",it.name||"（名称未設定）");nm.title=it.name||"";nn_.appendChild(nm);
+  nm.title=(it.code||"")+" "+(it.name||"");
+  var x=el("button","ico","✕");x.type="button";x.title="外す";
+  x.onclick=function(){
+    var sub=it.div==="中間品"?bomCount(it.id):0;
+    if(!confirm((it.name||it.code)+" を外しますか？"+(sub?"（中間品の中身はマスタに残ります）":"")))return;
+    removeRows("bom",[l.id]);
+  };
+  nn_.appendChild(x);n.appendChild(nn_);
+  var nq=el("div","nq");var qu=el("span","qu");nq.appendChild(qu);
+  var q=el("input","qi");q.value=l.qty||"";q.placeholder="使用量";q.dataset.rid=l.id;q.dataset.f="qty";q.inputMode="decimal";
+  q.oninput=function(){var o=Object.assign({},S.bom.get(l.id));o.qty=q.value;queueSave("bom",o);scheduleSoft();};
+  q.onchange=function(){var sp=splitQty(q.value);if(sp.u){registerUnit(it.div,sp.u);var o=Object.assign({},S.bom.get(l.id));o.qty=sp.q;o.unit=sp.u;commit("bom",[o]);}};
+  qu.appendChild(q);
+  var u=unitSelect(it.div,l.unit||"","ui");u.dataset.rid=l.id;u.dataset.f="unit";
+  u.onchange=function(){var o=Object.assign({},S.bom.get(l.id));o.unit=u.value;commit("bom",[o]);};qu.appendChild(u);
+  if(it.div==="原料"){
+    var f=el("input","fi");f.value=l.form||"";f.placeholder="加工形態";f.dataset.rid=l.id;f.dataset.f="form";
+    f.oninput=function(){var o=Object.assign({},S.bom.get(l.id));o.form=f.value;queueSave("bom",o);};nq.appendChild(f);
+  }
+  n.appendChild(nq);
+  if(it.div==="中間品"){
+    if(depth<MAXDEPTH){
+      var sub=el("div","sub");
+      sub.appendChild(el("div","sublbl","中身"));
+      sub.appendChild(branches(it,depth+1));
+      n.appendChild(sub);
+    }
+  }
+  return n;
+}
+var softT=null;
+function scheduleSoft(){clearTimeout(softT);softT=setTimeout(function(){render();},900);}
+
+function entryForm(parent,d){
+  var f=el("div","entry");f.style.setProperty("--cc",CC[d]);
+  var r1=el("div","er");
+  var name=el("input","fld");name.id="ename";name.placeholder=d+"の名前";name.autocomplete="off";
+  var form=null;
+  if(d==="原料"){form=el("input","fld md");form.placeholder="加工形態";form.id="eform";}
+  var qty=el("input","fld sm");qty.placeholder="使用量";qty.inputMode="decimal";qty.id="eqty";qty.style.textAlign="right";
+  var unit=unitSelect(d,S.unitMem[d]||"","fld sm","eunit");
+  var equ=el("span","equ");equ.appendChild(qty);equ.appendChild(unit);
+  r1.appendChild(name);if(form)r1.appendChild(form);r1.appendChild(equ);
+  f.appendChild(r1);
+  var sug=el("div","sug hide");f.appendChild(sug);
+  var eb=el("div","eb");
+  var add=el("button","btn nv sm","引き当て  ⏎");add.type="button";
+  var close=el("button","btn sm","閉じる");close.type="button";close.onclick=function(){S.open=null;render();};
+  eb.appendChild(add);eb.appendChild(close);
+  eb.appendChild(el("span","hint","名前を空にしてEnterで閉じる"));
+  f.appendChild(eb);
+
+  var picked=null,sugI=-1,sugItems=[];
+  function cands(){
+    var q=norm(name.value);var out=[];
+    S.items.forEach(function(r){if(r.div!==d||r.id===parent.id)return;if(!q||norm([r.code,r.name,r.spec].join(" ")).indexOf(q)>=0)out.push(r);});
+    out.sort(function(a,b){var an=norm(a.name).indexOf(q)===0?0:1,bn=norm(b.name).indexOf(q)===0?0:1;if(an!==bn)return an-bn;return String(a.name||"").localeCompare(String(b.name||""));});
+    return out;
+  }
+  function drawSug(){
+    sug.textContent="";sugItems=cands();
+    var q=name.value.trim();
+    if(!q&&!sugItems.length){sug.classList.add("hide");return;}
+    sugItems.forEach(function(r,i){
+      var b=el("button");b.type="button";if(i===sugI)b.classList.add("on");
+      b.appendChild(el("span","sc",r.code||"—"));b.appendChild(el("span","sn",r.name||"（名称未設定）"));b.appendChild(el("span","ss",[r.spec,r.unit].filter(Boolean).join(" ")));
+      b.onmousedown=function(ev){ev.preventDefault();pick(r);};sug.appendChild(b);
+    });
+    var exact=q?findByName(d,q):null;
+    if(q&&!exact){
+      var nb=el("button");nb.type="button";if(sugI===sugItems.length)nb.classList.add("on");
+      nb.appendChild(el("span","sc","新規"));nb.appendChild(el("span","sn new","「"+q+"」を"+d+"マスタに登録して引き当てる"));
+      nb.onmousedown=function(ev){ev.preventDefault();picked=null;submit();};sug.appendChild(nb);
+    }
+    sug.classList.toggle("hide",!sug.childElementCount);
+    var on=sug.querySelector("button.on");if(on&&on.scrollIntoView)on.scrollIntoView({block:"nearest"});
+  }
+  function pick(r){picked=r;name.value=r.name||"";sug.classList.add("hide");if(r.unit&&!unit.value){var has=false;for(var i=0;i<unit.options.length;i++)if(unit.options[i].value===r.unit)has=true;if(!has){var o=el("option",null,r.unit);o.value=r.unit;unit.appendChild(o);}unit.value=r.unit;}(form||qty).focus();}
+  function submit(){
+    var n=name.value.trim();
+    if(!n){S.open=null;render();return;}
+    var sp=splitQty(qty.value);var uu=sp.u||unit.value.trim();if(uu&&uu!=="__new__")registerUnit(d,uu);else if(uu==="__new__")uu="";
+    var it=(picked&&norm(picked.name)===norm(n))?picked:(findByName(d,n)||newItem(d,n,"",uu));
+    var l={id:uid("b"),p:parent.id,c:it.id,qty:sp.q,unit:uu||it.unit||"",form:form?form.value.trim():"",loss:"1",note:"",seq:childrenOf(parent.id).length+1};
+    S.unitMem[d]=uu;
+    var isNewIm=it.div==="中間品"&&bomCount(it.id)===0;
+    if(isNewIm)S.open={p:it.id,d:"加工食材"};else S.open={p:parent.id,d:d};
+    S.focusId="ename";S.lastLine=l.id;
+    commit("bom",[l]);
+    toast(isNewIm?(it.name+" の中身を入れてください"):(d+"　"+it.name+" を引き当て"));
+  }
+  name.oninput=function(){picked=null;sugI=-1;drawSug();};
+  name.onfocus=function(){drawSug();};
+  name.onblur=function(){setTimeout(function(){sug.classList.add("hide");},150);};
+  name.onkeydown=function(ev){if(ime(ev))return;
+    var total=sug.childElementCount;
+    if(ev.key==="ArrowDown"){ev.preventDefault();if(sug.classList.contains("hide"))drawSug();sugI=Math.min(total-1,sugI+1);drawSug();return;}
+    if(ev.key==="ArrowUp"){ev.preventDefault();sugI=Math.max(-1,sugI-1);drawSug();return;}
+    if(ev.key==="Escape"){if(!sug.classList.contains("hide")){sug.classList.add("hide");return;}S.open=null;render();return;}
+    if(ev.key==="Enter"){
+      ev.preventDefault();
+      if(sugI>=0&&sugI<sugItems.length){pick(sugItems[sugI]);return;}
+      if(!name.value.trim()){submit();return;}
+      var ex=findByName(d,name.value);
+      if(ex){pick(ex);return;}
+      submit();
+    }
+  };
+  [qty,unit].concat(form?[form]:[]).forEach(function(i){i.onkeydown=function(ev){if(ime(ev))return;if(ev.key==="Enter"){ev.preventDefault();submit();}if(ev.key==="Escape"){S.open=null;render();}};});
+  add.onclick=submit;
+  return f;
+}
+
+/* ===== MAP VIEW ===== */
+function drawMap(main){
+  var wrap=el("div","wrap");
+  var ps=products();
+  var bar=el("div","mapbar");
+  [["all","すべて"],["0","未着手"],["1","途中"],["2","完了"]].forEach(function(x){
+    var b=el("button","btn sm"+(S.mapF===x[0]?" nv":""),x[1]);b.onclick=function(){S.mapF=x[0];render();};bar.appendChild(b);
+  });
+  var lg=el("div","legend");
+  [["var(--line)","未着手"],["var(--amber)","途中"],["var(--green)","完了"]].forEach(function(x){var s=el("span");var i=el("i");i.style.background=x[0];s.appendChild(i);s.appendChild(document.createTextNode(x[1]));lg.appendChild(s);});
+  var be=el("button","btn","引き当て結果を書き出し（CSV）");be.style.marginLeft="12px";be.onclick=function(){exportBom(null);};bar.appendChild(be);
+  bar.appendChild(lg);wrap.appendChild(bar);
+  var tiles=el("div","tiles"),dups=dupKeys(),shown=0;
+  ps.forEach(function(p){
+    var s=status(p);
+    if(S.mapF!=="all"&&String(s)!==S.mapF)return;
+    shown++;
+    var t=el("button","tile s"+s+(p.id===S.cur?" cur":""));t.type="button";
+    var tc=el("div","tc");tc.appendChild(el("span",null,p.code||"未採番"));if(dups.has(p.id))tc.appendChild(el("span",null,"同名あり"));t.appendChild(tc);
+    t.appendChild(el("div","tn",p.name||"（名称未設定）"));
+    var n=bomCount(p.id);t.appendChild(el("div","ts",statusName(s)+(n?"　構成 "+n:"")));
+    t.onclick=function(){S.cur=p.id;S.view="tree";S.open=null;S.anim=true;render();lsSave();};
+    tiles.appendChild(t);
+  });
+  if(!shown){var e=el("div","empty");e.appendChild(el("div",null,ps.length?"該当する商品がありません":"商品がまだありません"));wrap.appendChild(e);}
+  wrap.appendChild(tiles);main.appendChild(wrap);
+}
+
+/* ===== MASTERS VIEW ===== */
+function drawMasters(main){
+  var wrap=el("div","wrap");
+  var tabs=el("div","tabs");
+  DIV.forEach(function(d){
+    var b=el("button",null,d+"マスタ　"+countDiv(d));b.type="button";b.setAttribute("aria-selected",S.mtab===d?"true":"false");b.style.setProperty("--cc",CC[d]);
+    b.onclick=function(){S.mtab=d;S.q="";S.limit=200;render();};tabs.appendChild(b);
+  });
+  var ub=el("button",null,"単位");ub.type="button";ub.setAttribute("aria-selected",S.mtab==="units"?"true":"false");
+  ub.onclick=function(){S.mtab="units";render();};tabs.appendChild(ub);
+  wrap.appendChild(tabs);
+  if(S.mtab==="units"){drawUnits(wrap);main.appendChild(wrap);return;}
+  var d=S.mtab,isPr=d==="商品",isIm=d==="中間品";
+  var bar=el("div","bar");
+  var q=el("input","fld grow");q.type="search";q.id="q";q.value=S.q;q.placeholder=isPr?"コード・商品名・読み・JANで検索":"コード・名称で検索";
+  q.oninput=function(){S.q=q.value;S.limit=200;render();};bar.appendChild(q);
+  var imp=el("button","btn","取込");imp.onclick=function(){openImport(d);};
+  var exp=el("button","btn","書き出し");exp.onclick=function(){exportMaster(d);};
+  bar.appendChild(imp);bar.appendChild(exp);
+  wrap.appendChild(bar);
+  wrap.appendChild(quickBar(d));
+  var rows=filtered(d);
+  if(!rows.length){
+    var e=el("div","empty");e.appendChild(el("div",null,S.q?"条件に合う行がありません":d+"マスタはまだ空です"));
+    e.appendChild(el("div",null,"上の欄に名称を入れてEnter、またはExcel／CSVを「取込」"));wrap.appendChild(e);
+  }else{
+    var tw=el("div","tablewrap");tw.appendChild(isPr?prodTable(rows):(isIm?imTable(rows):buyTable(rows)));wrap.appendChild(tw);
+    if(rows.length>S.limit){var m=el("button","more","さらに表示（残り "+(rows.length-S.limit)+" 件）");m.onclick=function(){S.limit+=200;render();};wrap.appendChild(m);}
+  }
+  main.appendChild(wrap);
+}
+function drawUnits(wrap){
+  ["原料","中間品","加工食材","資材","商品"].forEach(function(d){
+    var box=el("div","quick");box.style.alignItems="flex-start";
+    var k=el("span","k",d);k.style.minWidth="64px";k.style.paddingTop="6px";box.appendChild(k);
+    var list=el("div");list.style.display="flex";list.style.flexWrap="wrap";list.style.gap="6px";list.style.flex="1";list.style.alignItems="center";
+    (UNITS[d]||[]).forEach(function(u){var c=el("span","pill no",u);list.appendChild(c);});
+    (S.units[d]||[]).forEach(function(u){
+      var c=el("span","pill ok");c.style.display="inline-flex";c.style.alignItems="center";c.style.gap="4px";
+      c.appendChild(document.createTextNode(u));
+      var x=el("button","ico","✕");x.type="button";x.title="削除";x.style.fontSize="11px";x.style.padding="0 2px";
+      x.onclick=function(){S.units[d]=S.units[d].filter(function(v){return v!==u;});lsSave();render();toast("単位「"+u+"」を削除しました");};
+      c.appendChild(x);list.appendChild(c);
+    });
+    var add=el("input","fld short");add.placeholder="追加";add.style.width="110px";
+    add.onkeydown=function(ev){if(ime(ev))return;if(ev.key==="Enter"){ev.preventDefault();var v=add.value.trim();if(!v)return;registerUnit(d,v);render();toast("単位「"+v+"」を追加しました");}};
+    list.appendChild(add);box.appendChild(list);wrap.appendChild(box);
+  });
+  var note=el("div",null,"グレーは標準の単位。緑は記入して追加された単位で、✕で削除できます。");note.style.color="var(--muted)";note.style.fontSize="12px";wrap.appendChild(note);
+}
+function chk(id,label,val,on){var l=el("label","chk");var i=el("input");i.type="checkbox";i.checked=val;i.id=id;i.onchange=function(){on(i.checked);};l.appendChild(i);l.appendChild(el("span",null,label));return l;}
+function quickBar(d){
+  var qb=el("div","quick");qb.appendChild(el("span","k","ADD"));
+  var name=el("input","fld name");name.id="qname";name.placeholder=d==="商品"?"商品名":d+"の名称";
+  var spec=el("input","fld short");spec.id="qspec";spec.placeholder="規格（L・M・10kg箱）";spec.style.width="150px";if(d!=="原料")spec.classList.add("hide");
+  var unit=unitSelect(d,S.unitMem["m"+d]||"","fld short","qunit");
+  var go=el("button","btn"+(d==="商品"?" pri":" nv"),"追加  ⏎");
+  function submit(){
+    var n=name.value.trim();if(!n){name.focus();return;}
+    var dup=findByName(d,n);
+    if(dup&&!confirm("「"+n+"」は登録済みです。もう1件追加しますか？")){name.focus();name.select();return;}
+    S.unitMem["m"+d]=unit.value.trim();
+    var r=newItem(d,n,spec.value.trim(),S.unitMem["m"+d]);
+    S.q="";S.focusId="qname";commit("items",[r]);toast(r.code+"　"+r.name+" を追加");
+  }
+  [name,spec,unit].forEach(function(i){i.onkeydown=function(e){if(ime(e))return;if(e.key==="Enter"){e.preventDefault();submit();}};});
+  go.onclick=submit;qb.appendChild(name);qb.appendChild(spec);qb.appendChild(unit);qb.appendChild(go);
+  return qb;
+}
+function filtered(d){
+  var q=norm(S.q),out=[];
+  S.items.forEach(function(r){
+    if(r.div!==d)return;
+    if(q&&norm([r.code,r.name,r.kana,r.jan,r.spec].join(" ")).indexOf(q)<0)return;out.push(r);
+  });
+  out.sort(function(a,b){var ac=String(a.code||"~~~"),bc=String(b.code||"~~~");if(ac!==bc)return ac<bc?-1:1;return String(a.name||"").localeCompare(String(b.name||""));});
+  return out;
+}
+function cellInput(r,f,opts){
+  var td=el("td",opts&&opts.cls||null);
+  var i=el("input");i.type="text";i.value=r[f]==null?"":r[f];i.dataset.rid=r.id;i.dataset.f=f;
+  i.oninput=function(){var row=Object.assign({},S.items.get(r.id));row[f]=i.value;queueSave("items",row);};
+  i.onkeydown=function(e){if(ime(e))return;
+    if(e.key!=="Enter")return;e.preventDefault();
+    var tr=i.closest("tr"),next=e.shiftKey?tr.previousElementSibling:tr.nextElementSibling;
+    var n=next?next.querySelector('[data-f="'+f+'"]'):null;
+    if(n){n.focus();if(n.select)n.select();return;}
+    if(e.shiftKey)return;
+    var cur=S.items.get(r.id),nr=newItem(cur.div,"","",cur.unit||"");
+    S.focusRowId=nr.id;S.focusRowF=(f==="code"?"name":f);commit("items",[nr]);
+    setTimeout(function(){var q=document.querySelector('[data-rid="'+nr.id+'"][data-f="'+S.focusRowF+'"]');if(q){q.focus();q.scrollIntoView({block:"nearest"});}},30);
+  };
+  td.appendChild(i);return td;
+}
+function buyTable(rows){
+  var raw=S.mtab==="原料";
+  var t=el("table","wbuy");t.appendChild(colg(raw?[140,0,130,100,100,100,150,180,40]:[140,0,100,100,100,150,200,40]));
+  var thead=el("thead"),tr=el("tr");(raw?["コード","名称","規格","基本単位","仕入単位","仕入換算","仕入先","備考",""]:["コード","名称","基本単位","仕入単位","仕入換算","仕入先","備考",""]).forEach(function(h){tr.appendChild(el("th",null,h));});thead.appendChild(tr);t.appendChild(thead);
+  var tb=el("tbody");
+  rows.slice(0,S.limit).forEach(function(r){
+    var row=el("tr");
+    row.appendChild(cellInput(r,"code",{cls:"mono"}));row.appendChild(cellInput(r,"name"));if(raw)row.appendChild(cellInput(r,"spec"));row.appendChild(cellInput(r,"unit"));
+    row.appendChild(cellInput(r,"punit"));row.appendChild(cellInput(r,"conv",{cls:"rr"}));row.appendChild(cellInput(r,"supplier"));row.appendChild(cellInput(r,"note"));
+    row.appendChild(delCell(r));tb.appendChild(row);
+  });
+  t.appendChild(tb);return t;
+}
+function imTable(rows){
+  var t=el("table","wim");t.appendChild(colg([140,0,100,200,90,40]));
+  var thead=el("thead"),tr=el("tr");["コード","名称","基本単位","備考","中身",""].forEach(function(h){tr.appendChild(el("th",null,h));});thead.appendChild(tr);t.appendChild(thead);
+  var tb=el("tbody");
+  rows.slice(0,S.limit).forEach(function(r){
+    var row=el("tr");
+    row.appendChild(cellInput(r,"code",{cls:"mono"}));row.appendChild(cellInput(r,"name"));row.appendChild(cellInput(r,"unit"));row.appendChild(cellInput(r,"note"));
+    var n=bomCount(r.id);row.appendChild(el("td","c num",n?String(n):"—"));
+    row.appendChild(delCell(r));tb.appendChild(row);
+  });
+  t.appendChild(tb);return t;
+}
+function prodTable(rows){
+  var t=el("table","wpr");t.appendChild(colg([148,0,150,150,100,180,90,40]));
+  var thead=el("thead"),tr=el("tr");["社内商品コード","商品名","読み","JAN","販売単位","備考","引き当て",""].forEach(function(h){tr.appendChild(el("th",null,h));});thead.appendChild(tr);t.appendChild(thead);
+  var tb=el("tbody"),dups=dupKeys();
+  rows.slice(0,S.limit).forEach(function(r){
+    var row=el("tr");if(dups.has(r.id))row.classList.add("dup");
+    row.appendChild(cellInput(r,"code",{cls:"mono"}));row.appendChild(cellInput(r,"name"));row.appendChild(cellInput(r,"kana"));row.appendChild(cellInput(r,"jan",{cls:"mono"}));
+    row.appendChild(cellInput(r,"unit"));row.appendChild(cellInput(r,"note"));
+    var tds=el("td","c");var s=status(r);var b=el("button","btn sm",statusName(s)+(bomCount(r.id)?" "+bomCount(r.id):""));b.type="button";
+    b.onclick=function(){S.cur=r.id;S.view="tree";S.open=null;render();lsSave();};tds.appendChild(b);row.appendChild(tds);
+    row.appendChild(delCell(r));tb.appendChild(row);
+  });
+  t.appendChild(tb);return t;
+}
+function delCell(r){
+  var td=el("td","c");var b=el("button","ico","✕");b.type="button";b.title="削除";
+  b.onclick=function(){
+    var used=[];S.bom.forEach(function(l){if(l.p===r.id||l.c===r.id)used.push(l.id);});
+    var label=r.name||r.code||"この行";
+    if(used.length){if(!confirm(label+" は構成 "+used.length+" 行で使われています。まとめて削除しますか？"))return;}
+    else if(!confirm(label+" を削除しますか？"))return;
+    if(used.length)removeRows("bom",used);removeRows("items",[r.id]);
+  };
+  td.appendChild(b);return td;
+}
+
+/* ===== import ===== */
+var FIELDS={
+  raw:[["code","コード"],["name","名称"],["spec","規格"],["unit","基本単位"],["punit","仕入単位"],["conv","仕入換算"],["supplier","仕入先"],["note","備考"]],
+  buy:[["code","コード"],["name","名称"],["unit","基本単位"],["punit","仕入単位"],["conv","仕入換算"],["supplier","仕入先"],["note","備考"]],
+  im:[["code","コード"],["name","名称"],["unit","基本単位"],["note","備考"]],
+  pr:[["code","社内商品コード"],["name","商品名"],["kana","読み"],["jan","JAN"],["unit","販売単位"],["note","備考"]],
+  bom:[["pcode","親コード"],["ccode","構成コード"],["form","加工形態"],["qty","標準使用量"],["unit","単位"],["loss","ロス係数"],["note","備考"]]
+};
+var ALIAS={
+  code:["社内商品コード","商品コード","コード","品番","code","id","原料コード","資材コード","加工食材コード","中間品コード"],
+  name:["標準商品名","商品名","名称","品名","name","原料名","資材名"],
+  kana:["読み","よみ","かな","カナ","ふりがな","kana"],jan:["jan","janコード","バーコード"],
+  spec:["規格","容量","サイズ","spec"],unit:["単位","基本単位","販売単位","在庫基本単位"],
+  punit:["仕入単位","発注単位"],conv:["換算","仕入換算","入数"],supplier:["仕入先","取引先","メーカー"],
+  pcode:["親コード","親","完成品コード","商品コード"],ccode:["構成コード","子コード","構成物コード","構成"],
+  form:["加工形態","形態","カット","加工"],qty:["標準使用量","使用量","数量","qty"],loss:["ロス係数","ロス","歩留"],
+  ok:["確定","ステータス","status"],note:["備考","メモ","note"]
+};
+function fieldSet(mode){return mode==="bom"?"bom":(mode==="商品"?"pr":(mode==="中間品"?"im":(mode==="原料"?"raw":"buy")));}
+var IMP={};
+var SAMPLE={
+  "商品":{head:["社内商品コード","商品名","読み","JAN","販売単位","備考"],rows:[["BP-000001","シーザーサラダ 200g","しーざーさらだ","4512345000012","パック",""],["（空欄なら自動採番）","コールスロー 150g","","4512345000029","パック",""]]},
+  "原料":{head:["コード","名称","規格","基本単位","仕入単位","仕入換算","仕入先","備考"],rows:[["RM-0001","レタス","L","kg","ケース","10","青果卸A",""],["（空欄なら自動採番）","キャベツ","","kg","ケース","20","青果卸A",""]]},
+  "加工食材":{head:["コード","名称","基本単位","仕入単位","仕入換算","仕入先","備考"],rows:[["PM-0001","ドレッシング液","g","本","500","食材商社B",""],["（空欄なら自動採番）","ベーコン","g","袋","500","食材商社B",""]]},
+  "資材":{head:["コード","名称","基本単位","仕入単位","仕入換算","仕入先","備考"],rows:[["PK-0001","サラダカップ 350ml","個","箱","1000","資材商事C",""],["（空欄なら自動採番）","フィルム","m","巻","2000","資材商事C",""]]},
+  "中間品":{head:["コード","名称","基本単位","備考"],rows:[["IM-0001","ドレッシングパック","個",""],["（空欄なら自動採番）","カット野菜ミックス","g",""]]}
+};
+function sampleBlock(mode){
+  var sp=SAMPLE[mode];if(!sp)return el("div");
+  var smp=el("div");smp.style.textAlign="left";
+  smp.appendChild(el("div","lbl","取り込めるCSVの例"));
+  var st=el("table");st.style.marginTop="6px";st.style.border="1.5px solid var(--line)";st.style.borderRadius="10px";st.style.fontSize="12px";st.style.tableLayout="auto";st.style.whiteSpace="nowrap";
+  var sh=el("thead"),shr=el("tr");sp.head.forEach(function(h){shr.appendChild(el("th",null,h));});sh.appendChild(shr);st.appendChild(sh);
+  var sb=el("tbody");
+  sp.rows.forEach(function(r){var tr=el("tr");r.forEach(function(v,i){var td=el("td",null,v);if(i===0&&v.indexOf("（")===0)td.style.color="var(--muted)";tr.appendChild(td);});sb.appendChild(tr);});
+  st.appendChild(sb);var stw=el("div","tablewrap");stw.appendChild(st);smp.appendChild(stw);
+  var tb=el("button","btn sm","CSVフォーマットをダウンロード");tb.type="button";tb.style.marginTop="8px";
+  tb.onclick=function(){dl(mode+"マスタ_フォーマット.csv",toCsv(sp.head,[sp.rows[0]]));};
+  smp.appendChild(tb);
+  return smp;
+}
+function openImport(mode){
+  IMP={mode:mode,headers:[],rows:[],map:{},hasHeader:true,over:true};
+  var ov=el("div","ov");ov.id="ov";var m=el("div","modal");
+  var hd=el("header");hd.appendChild(el("h2",null,mode==="bom"?"構成を取込む":mode+"マスタを取込む"));
+  var x=el("button","btn","閉じる");x.onclick=closeModal;hd.appendChild(x);m.appendChild(hd);
+  var body=el("div","body");body.id="impbody";m.appendChild(body);
+  var ft=el("footer");var info=el("div");info.id="impinfo";info.style.marginRight="auto";info.style.color="var(--muted)";ft.appendChild(info);
+  var cancel=el("button","btn","キャンセル");cancel.onclick=closeModal;
+  var go=el("button","btn pri","取込む");go.id="impgo";go.disabled=true;go.onclick=doImport;
+  ft.appendChild(cancel);ft.appendChild(go);m.appendChild(ft);ov.appendChild(m);
+  ov.onclick=function(e){if(e.target===ov)closeModal();};document.getElementById("layer").appendChild(ov);
+  drawImportBody();
+}
+function closeModal(){var ov=document.getElementById("ov");if(ov)ov.remove();}
+function drawImportBody(){
+  var b=document.getElementById("impbody");if(!b)return;b.textContent="";
+  var drop=el("div","drop");drop.appendChild(el("div",null,"Excel（.xlsx）／CSV をここにドロップ"));
+  var pick=el("button","btn","ファイルを選ぶ");pick.style.marginTop="8px";
+  var fi=el("input");fi.type="file";fi.accept=".xlsx,.xls,.csv,.txt";fi.className="hide";fi.onchange=function(){if(fi.files[0])readFile(fi.files[0]);};
+  pick.onclick=function(){fi.click();};drop.appendChild(pick);drop.appendChild(fi);
+  drop.ondragover=function(e){e.preventDefault();drop.classList.add("hot");};drop.ondragleave=function(){drop.classList.remove("hot");};
+  drop.ondrop=function(e){e.preventDefault();drop.classList.remove("hot");if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);};
+  b.appendChild(drop);
+  var or=el("div",null,"または Excel からコピーして貼り付け");or.style.margin="12px 0 4px";b.appendChild(or);
+  var ta=el("textarea","paste");ta.placeholder="1行目に見出し、2行目以降にデータ";ta.onpaste=function(){setTimeout(function(){parseText(ta.value);},10);};ta.onchange=function(){parseText(ta.value);};b.appendChild(ta);
+  if(!IMP.rows.length){if(IMP.mode!=="bom"){var sbk=sampleBlock(IMP.mode);sbk.style.marginTop="16px";b.appendChild(sbk);}return;}
+  var opt=el("div");opt.style.margin="14px 0 6px";opt.style.display="flex";opt.style.gap="8px";opt.style.flexWrap="wrap";
+  opt.appendChild(chk("hasHeader","1行目は見出し",IMP.hasHeader,function(v){IMP.hasHeader=v;reguess();}));
+  opt.appendChild(chk("over","同じコードは上書き",IMP.over,function(v){IMP.over=v;summarize();}));b.appendChild(opt);
+  b.appendChild(el("div","lbl","列の対応"));
+  var maps=el("div","maps");
+  FIELDS[fieldSet(IMP.mode)].forEach(function(f){
+    var lab=el("label");lab.appendChild(el("span",null,f[1]));var s=el("select","fld");
+    var o0=el("option",null,"— 取込まない —");o0.value="";s.appendChild(o0);
+    IMP.headers.forEach(function(h,i){var o=el("option",null,h||("列"+(i+1)));o.value=String(i);if(IMP.map[f[0]]===i)o.selected=true;s.appendChild(o);});
+    s.onchange=function(){IMP.map[f[0]]=s.value===""?null:parseInt(s.value,10);summarize();};lab.appendChild(s);maps.appendChild(lab);
+  });
+  b.appendChild(maps);var sum=el("div","sum");sum.id="impsum";b.appendChild(sum);var errs=el("div","errs");errs.id="imperrs";b.appendChild(errs);summarize();
+}
+function readFile(f){
+  var name=(f.name||"").toLowerCase();
+  if(/\.(xlsx|xls)$/.test(name)){
+    if(!window.XLSX){toast("Excelを読めません。CSVで保存して取込んでください");return;}
+    var fr=new FileReader();fr.onload=function(){try{var wb=XLSX.read(new Uint8Array(fr.result),{type:"array"});var ws=wb.Sheets[wb.SheetNames[0]];setRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}));}catch(e){toast("Excelを読めませんでした");}};
+    fr.readAsArrayBuffer(f);
+  }else{var fr2=new FileReader();fr2.onload=function(){parseText(String(fr2.result));};fr2.readAsText(f,"UTF-8");}
+}
+function parseText(txt){
+  if(!txt||!txt.trim())return;var delim=txt.indexOf("\t")>=0?"\t":",";var rows=[],cur=[],val="",q=false;
+  for(var i=0;i<txt.length;i++){var ch=txt[i];
+    if(q){if(ch==='"'){if(txt[i+1]==='"'){val+='"';i++;}else q=false;}else val+=ch;}
+    else if(ch==='"')q=true;else if(ch===delim){cur.push(val);val="";}else if(ch==="\n"){cur.push(val);rows.push(cur);cur=[];val="";}else if(ch==="\r"){}else val+=ch;}
+  if(val!==""||cur.length){cur.push(val);rows.push(cur);}
+  rows=rows.filter(function(r){return r.some(function(c){return String(c).trim()!=="";});});setRows(rows);
+}
+function setRows(aoa){if(!aoa||!aoa.length){toast("データが読み取れません");return;}IMP.rows=aoa;reguess();}
+function reguess(){
+  var aoa=IMP.rows;if(!aoa.length)return;var width=0;aoa.forEach(function(r){if(r.length>width)width=r.length;});
+  IMP.headers=[];for(var i=0;i<width;i++)IMP.headers.push(IMP.hasHeader?String(aoa[0][i]==null?"":aoa[0][i]).trim():"列"+(i+1));
+  IMP.map={};
+  FIELDS[fieldSet(IMP.mode)].forEach(function(f){var key=f[0],al=ALIAS[key]||[];
+    for(var i=0;i<IMP.headers.length;i++){var h=norm(IMP.headers[i]);if(!h)continue;for(var k=0;k<al.length;k++){if(h.indexOf(norm(al[k]))>=0){IMP.map[key]=i;return;}}}});
+  drawImportBody();
+}
+function impRows(){return IMP.hasHeader?IMP.rows.slice(1):IMP.rows.slice(0);}
+function pick(row,field){var i=IMP.map[field];if(i==null)return "";return String(row[i]==null?"":row[i]).trim();}
+function summarize(){
+  var sum=document.getElementById("impsum"),errBox=document.getElementById("imperrs");if(!sum)return;
+  var rows=impRows(),codes=byCode(),add=0,upd=0,skip=0,errs=[];
+  if(IMP.mode==="bom"){
+    rows.forEach(function(r,idx){var pc=pick(r,"pcode"),cc=pick(r,"ccode");if(!pc&&!cc){skip++;return;}
+      var P=codes.get(pc),C=codes.get(cc);
+      if(!P){errs.push((idx+1)+"行目: 親コード "+(pc||"空欄")+" がありません");return;}
+      if(!BR[P.div]){errs.push((idx+1)+"行目: "+pc+" は"+P.div+"のため親になれません");return;}
+      if(!C){errs.push((idx+1)+"行目: 構成コード "+(cc||"空欄")+" がありません");return;}
+      if(BR[P.div].indexOf(C.div)<0){errs.push((idx+1)+"行目: "+P.div+"の下に"+C.div+"は置けません");return;}add++;});
+  }else{rows.forEach(function(r){var c=pick(r,"code"),n=pick(r,"name");if(!c&&!n){skip++;return;}if(c&&codes.has(c)){IMP.over?upd++:skip++;}else add++;});}
+  sum.textContent="";var line=el("div");
+  line.appendChild(el("span",null,"新規 "));line.appendChild(el("b",null,String(add)));line.appendChild(el("span",null," 件　更新 "));line.appendChild(el("b",null,String(upd)));
+  line.appendChild(el("span",null," 件　スキップ "));line.appendChild(el("b",null,String(skip)));line.appendChild(el("span",null," 件"));sum.appendChild(line);
+  if(errs.length){var w=el("div",null,"取込めない行 "+errs.length+" 件");w.style.color="var(--red)";w.style.marginTop="4px";sum.appendChild(w);}
+  errBox.textContent="";errs.slice(0,30).forEach(function(m){errBox.appendChild(el("div",null,m));});
+  var go=document.getElementById("impgo");if(go)go.disabled=(add+upd)===0;
+  var info=document.getElementById("impinfo");if(info)info.textContent=rows.length+" 行を読み込みました";
+}
+function doImport(){
+  var rows=impRows(),codes=byCode(),n=0;
+  if(IMP.mode==="bom"){
+    var bout=[],seqBy={};
+    rows.forEach(function(r){var P=codes.get(pick(r,"pcode")),C=codes.get(pick(r,"ccode"));
+      if(!P||!C||!BR[P.div]||BR[P.div].indexOf(C.div)<0)return;
+      seqBy[P.id]=(seqBy[P.id]||bomCount(P.id))+1;
+      bout.push({id:uid("b"),p:P.id,c:C.id,qty:pick(r,"qty"),unit:pick(r,"unit")||C.unit||"",form:pick(r,"form"),loss:pick(r,"loss")||"1",note:pick(r,"note"),seq:seqBy[P.id]});n++;});
+    commit("bom",bout);
+  }else{
+    var d=IMP.mode,gen=nextCode(d),out=[];
+    rows.forEach(function(r){var c=pick(r,"code"),name=pick(r,"name");if(!c&&!name)return;
+      var ex=c?codes.get(c):null;if(ex&&!IMP.over)return;if(ex&&ex.div!==d)return;
+      var row=ex?Object.assign({},ex):{id:uid("i"),div:d,ok:false,done:false};if(!c)c=gen();row.code=c;
+      ["name","kana","jan","spec","unit","punit","conv","supplier","note"].forEach(function(f){var v=pick(r,f);if(v!=="")row[f]=v;else if(row[f]==null)row[f]="";});
+      out.push(row);if(!ex)codes.set(c,row);n++;});
+    commit("items",out);
+  }
+  closeModal();toast(n+" 件を取込みました");
+}
+
+/* ===== export ===== */
+function csvCell(v){var s=v==null?"":String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+function toCsv(head,rows){var out=[head.map(csvCell).join(",")];rows.forEach(function(r){out.push(r.map(csvCell).join(","));});return "﻿"+out.join("\r\n");}
+function exportMaster(d){
+  var head,rows=[],list=filtered(d);
+  if(d==="商品"){head=["社内商品コード","商品名","読み","JAN","販売単位","引き当て","備考"];
+    list.forEach(function(r){rows.push([r.code,r.name,r.kana,r.jan,r.unit,statusName(status(r)),r.note]);});}
+  else if(d==="中間品"){head=["コード","名称","基本単位","備考"];list.forEach(function(r){rows.push([r.code,r.name,r.unit,r.note]);});}
+  else if(d==="原料"){head=["コード","名称","規格","基本単位","仕入単位","仕入換算","仕入先","備考"];list.forEach(function(r){rows.push([r.code,r.name,r.spec,r.unit,r.punit,r.conv,r.supplier,r.note]);});}
+  else{head=["コード","名称","基本単位","仕入単位","仕入換算","仕入先","備考"];list.forEach(function(r){rows.push([r.code,r.name,r.unit,r.punit,r.conv,r.supplier,r.note]);});}
+  if(!rows.length){toast("書き出す行がありません");return;}
+  dl(d+"マスタ_"+stamp()+".csv",toCsv(head,rows));toast(rows.length+" 行を書き出しました");
+}
+function exportBom(d){
+  var head=["親コード","親名称","親区分","構成コード","構成名称","構成区分","加工形態","標準使用量","単位","ロス係数","備考"],rows=[],list=[];
+  S.bom.forEach(function(l){var p=S.items.get(l.p);if(p&&(!d||p.div===d))list.push(l);});
+  list.sort(function(a,b){var pa=S.items.get(a.p),pb=S.items.get(b.p);var ca=String(pa.code||""),cb=String(pb.code||"");if(ca!==cb)return ca<cb?-1:1;return (a.seq||0)-(b.seq||0);});
+  list.forEach(function(l){var p=S.items.get(l.p),c=S.items.get(l.c);rows.push([p.code,p.name,p.div,c?c.code:"",c?c.name:"",c?c.div:"",l.form||"",l.qty,l.unit,l.loss,l.note]);});
+  if(!rows.length){toast("書き出す行がありません");return;}
+  dl("引き当て結果_"+stamp()+".csv",toCsv(head,rows));toast(rows.length+" 行を書き出しました");
+}
+
+/* ===== boot ===== */
+function boot(){
+  lsLoad();render();
+  document.getElementById("btnSave").onclick=saveWork;
+  var of=document.getElementById("openFile");
+  document.getElementById("btnOpen").onclick=function(){of.value="";of.click();};
+  of.onchange=function(){if(of.files[0])openWork(of.files[0]);};
+}
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.getElementById("ov"))closeModal();});
+boot();
+})();
+</script>
+</body>
+</html>
