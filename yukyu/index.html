@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>有給カレンダー</title>
+<style>
+/* 有給カレンダー — 白基調。上部にボタン群、下に横スクロールする管理簿。Excel 版の配色（水色ヘッダ・青の計算値）を踏襲 */
+:root {
+  --bg: #FFFFFF; --panel: #FFFFFF; --soft: #F1F4F7; --fg: #1E2A36; --muted: #5B6B7B; --line: #B8C4CF; --line-strong: #7F8F9F;
+  --head: #00B0F0; --head-fg: #FFFFFF; --deep: #0070C0; --deep-fg: #FFFFFF; --green: #70AD47; --green-deep: #375623;
+  --stripe: #DDEBF7; --tab: #FFFFCC; --tab-fg: #1E2A36; --sat: #0070C0; --sun: #E60000; --we: #F1F5F9;
+  --btn: #F7F9FB; --btn-fg: #1E2A36; --btn-line: #8A9AAA; --btn-hover: #E6EDF4; --focus: #0070C0;
+  --red: #FF6464; --yellow: #FFFF99; --sel: #CFE3F7; --flag: #FFE2E2; --err: #FFD6D6;
+  --chart-line: #00B0F0; --chart-top: #0070C0; --chart-bottom: #FF6464; --grid: #D5DDE5;
+  color-scheme: light;
+  --font: "Meiryo UI", Meiryo, "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 13px; line-height: 1.45; padding-block: 8px 32px; padding-inline: 16px; min-height: 100%; }
+button, input, select { font: inherit; color: inherit; }
+.hide { display: none !important; }
+.note { color: var(--muted); font-size: 12px; }
+.mono, .num { font-variant-numeric: tabular-nums; }
+.num { text-align: right; white-space: nowrap; }
+.blue { color: var(--deep); }
+.empty { color: var(--muted); text-align: center; padding: 18px 8px; }
+.empty.pad { background: var(--soft); border: 1px solid var(--line); }
+.print-only { display: none; }
+
+/* ---- 上部 ---- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 6px 0 10px; }
+.brand { font-weight: 700; font-size: 16px; letter-spacing: .02em; }
+.topbtns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { background: var(--btn); color: var(--btn-fg); border: 1px solid var(--btn-line); border-radius: 3px; padding: 6px 14px; cursor: pointer; white-space: nowrap; min-height: 32px; }
+.btn:hover { background: var(--btn-hover); }
+.btn:focus-visible, .cal-cell:focus-visible, .mtab:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.btn.primary { background: var(--deep); color: var(--deep-fg); border-color: var(--deep); font-weight: 700; }
+.btn.dark { background: var(--fg); color: #FFFFFF; border-color: var(--fg); }
+.btn.sm { padding: 4px 10px; min-height: 28px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.panelrow { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.box { border: 2px solid var(--deep); border-radius: 10px; padding: 14px 12px 10px; position: relative; display: flex; }
+.box-green { border-color: var(--green); }
+.box-label { position: absolute; top: -11px; left: 12px; background: var(--deep); color: #fff; font-size: 12px; font-weight: 700; padding: 1px 10px; border-radius: 3px; }
+.box-green .box-label { background: var(--green); }
+.box-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.company { font-weight: 700; font-size: 14px; margin: 4px 0 6px; }
+.cond { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin-bottom: 8px; }
+.cond label { display: inline-flex; align-items: center; gap: 6px; }
+.cond select { padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--panel); }
+.kv b { font-weight: 600; color: var(--muted); margin-right: 6px; }
+.calmode { font-weight: 700; display: inline-flex; gap: 10px; align-items: center; }
+
+/* ---- 表 ---- */
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); max-width: 100%; }
+table.grid { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+table.grid th, table.grid td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 3px 5px; white-space: nowrap; height: 26px; }
+table.grid th { background: var(--head); color: var(--head-fg); font-weight: 700; text-align: center; line-height: 1.2; position: sticky; top: 0; z-index: 2; }
+table.grid th.c-blue { background: var(--deep); color: #fff; }
+table.grid tr.odd td { background: var(--stripe); }
+table.grid td { background: var(--panel); }
+table.grid .sticky1, table.grid .sticky2 { position: sticky; z-index: 3; }
+table.grid th.sticky1, table.grid th.sticky2 { z-index: 4; }
+table.grid .sticky1 { left: 0; min-width: 84px; }
+table.grid .sticky2 { left: 84px; min-width: 110px; border-right: 2px solid var(--line-strong); }
+table.grid td.c-name { text-align: left; }
+.mcol { padding: 0 !important; background: var(--panel) !important; }
+.mtab { display: block; width: 100%; height: 100%; min-width: 42px; padding: 6px 11px 6px 7px; border: 0; background: var(--tab); color: var(--tab-fg); font-weight: 700; cursor: pointer; clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%); }
+.mtab:hover { filter: brightness(.94); }
+.mtab.cur { background: var(--green-deep); color: #fff; }
+td.mval { min-width: 36px; text-align: center; }
+table.cal th.dcol { min-width: 30px; padding: 3px 2px; }
+table.cal tr.wdrow th { background: var(--panel); color: var(--fg); top: 27px; }
+table.cal tr.wdrow th.wd0 { color: var(--sun); }
+table.cal tr.wdrow th.wd6 { color: var(--sat); }
+td.cal-cell { min-width: 30px; text-align: center; cursor: pointer; padding: 3px 2px; user-select: none; }
+td.cal-cell.wd0, td.cal-cell.wd6 { background: var(--we) !important; }
+td.cal-cell:hover { background: var(--sel) !important; }
+table.grid tr.odd td.cal-cell.wd0, table.grid tr.odd td.cal-cell.wd6 { background: var(--we) !important; }
+
+/* ---- モーダル ---- */
+.modal-wrap { position: fixed; inset: 0; background: rgba(0, 0, 0, .35); display: flex; align-items: flex-start; justify-content: center; padding: 24px 12px; overflow: auto; z-index: 100; }
+.modal { background: var(--panel); color: var(--fg); border: 1px solid var(--line-strong); box-shadow: 0 8px 30px rgba(0, 0, 0, .3); width: 720px; max-width: 100%; }
+.modal.w-sm { width: 380px; } .modal.w-md { width: 560px; } .modal.w-lg { width: 760px; } .modal.w-xl { width: 960px; } .modal.msg { width: 420px; }
+.modal-title { background: var(--deep); color: #fff; padding: 6px 10px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.modal-x { background: transparent; border: 0; color: #fff; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.modal-body { padding: 14px; }
+.msg-body { display: flex; gap: 12px; align-items: flex-start; padding: 6px 4px 14px; }
+.msg-icon { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--deep); color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.msg-body.warn .msg-icon { background: #E8A200; } .msg-body.error .msg-icon { background: #D33; } .msg-body.ask .msg-icon { background: var(--green); }
+.msg-text { padding-top: 5px; }
+.btns { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.btns.right { justify-content: flex-end; }
+.btns.wrap { flex-wrap: wrap; }
+.spacer { flex: 1; }
+.form { display: flex; flex-direction: column; gap: 10px; }
+.frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.frow > label:first-child, .frow .lbl { min-width: 110px; color: var(--muted); }
+.frow input[type=text], .frow input[type=number], .frow input[type=date], .frow select { padding: 5px 7px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--panel); min-width: 0; }
+.frow input[type=text] { min-width: 200px; } .frow input[type=number] { width: 90px; }
+.fset { border: 1px solid var(--line); padding: 8px 12px 12px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.fset legend { color: var(--muted); padding: 0 6px; }
+.radios label { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; }
+.chk { display: inline-flex; gap: 4px; align-items: center; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.tab { border: 1px solid var(--line); border-bottom: 0; background: var(--soft); padding: 6px 14px; cursor: pointer; }
+.tab.cur { background: var(--panel); font-weight: 700; margin-bottom: -1px; border-bottom: 1px solid var(--panel); }
+.pdref { border-collapse: collapse; font-size: 12px; margin-left: 118px; }
+.pdref th, .pdref td { border: 1px solid var(--line); padding: 2px 8px; text-align: center; }
+.pdref th { background: var(--soft); font-weight: 600; }
+table.gtable th, table.gtable td { text-align: center; }
+table.gtable input { width: 56px; text-align: center; padding: 3px; border: 1px solid var(--line); background: var(--panel); }
+.kvtable { border-collapse: collapse; }
+.kvtable th, .kvtable td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+.kvtable th { background: var(--soft); color: var(--muted); font-weight: 600; }
+.restore-info { min-height: 20px; }
+.csv-errors { margin-top: 8px; font-size: 12px; max-height: 180px; overflow: auto; }
+.err { color: #D33; }
+input.err, select.err { background: var(--err) !important; }
+
+/* ---- 社員情報 ---- */
+.emp-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.listbox { border: 1px solid var(--line-strong); background: var(--panel); height: 420px; overflow: auto; }
+.emp-right .listbox { height: auto; max-height: 420px; }
+.listbox.tall { height: 300px; }
+table.lst { border-collapse: collapse; width: 100%; }
+table.lst th, table.lst td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; white-space: nowrap; }
+table.lst th { position: sticky; top: 0; background: var(--soft); color: var(--muted); font-weight: 600; }
+table.lst th.num, table.lst td.num { text-align: right; }
+table.lst tbody tr { cursor: pointer; }
+table.lst tbody tr:hover { background: var(--stripe); }
+table.lst tr.sel td { background: var(--sel); }
+table.lst tr.flag td { background: var(--flag); }
+table.lst.kv td:first-child { color: var(--muted); width: 45%; }
+table.lst.kv tbody tr { cursor: default; }
+
+/* ---- 入力シート ---- */
+.sheetnote { color: var(--muted); margin: 4px 0 8px; }
+table.input td { padding: 2px; }
+table.input input, table.input select { width: 100%; min-width: 110px; padding: 4px 6px; border: 1px solid var(--line); background: var(--panel); }
+table.input input[type=number] { min-width: 90px; }
+table.input .rown { width: 34px; text-align: center; color: var(--muted); background: var(--soft) !important; }
+table.input th { font-weight: 600; }
+
+/* ---- レポート ---- */
+.report, .ledger { background: var(--panel); border: 1px solid var(--line); padding: 20px 24px; max-width: 860px; }
+.rp-head { position: relative; }
+.rp-term { text-align: right; color: var(--muted); }
+.report h2 { font-size: 20px; margin: 4px 0 6px; }
+.rp-note { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+.rp-company { text-align: right; font-weight: 700; }
+table.rpt { border-collapse: collapse; width: 100%; }
+table.rpt th, table.rpt td { padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.rpt th { border-top: 1px solid var(--fg); border-bottom: 1px solid var(--fg); font-weight: 600; text-align: center; line-height: 1.2; }
+table.rpt td.num { text-align: center; }
+table.rpt td.red { background: var(--red); } table.rpt td.yellow { background: var(--yellow); }
+.rp-caption { text-align: right; font-size: 12px; color: var(--muted); margin: 6px 0 22px; }
+.rp-title { text-align: center; font-size: 16px; margin: 0 0 10px; }
+table.rp-analysis { border-collapse: collapse; margin: 0 auto 18px; }
+table.rp-analysis td, table.rp-analysis th { padding: 4px 14px; }
+table.rp-analysis th { color: var(--muted); font-weight: 600; }
+table.rp-analysis td:first-child { min-width: 220px; }
+.chart-line { margin: 4px 0 14px; }
+.chart-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart { width: 100%; height: auto; display: block; font-family: var(--font); }
+.chart .ctitle { font-size: 13px; font-weight: 700; fill: var(--fg); }
+.chart .tick { font-size: 11px; fill: var(--muted); }
+.chart .grid { stroke: var(--grid); stroke-width: 1; }
+.chart .axis { stroke: var(--line-strong); stroke-width: 1; }
+.chart .line { fill: none; stroke: var(--chart-line); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .area { fill: var(--chart-line); opacity: .1; }
+.chart .dot { fill: var(--chart-line); stroke: var(--panel); stroke-width: 2; }
+.chart .bar.top { fill: var(--chart-top); } .chart .bar.bottom { fill: var(--chart-bottom); }
+
+/* ---- 個人別管理簿 ---- */
+.pager { display: inline-flex; gap: 6px; align-items: center; }
+.pager select { padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--panel); }
+.ledger { max-width: 1120px; overflow-x: auto; }
+.lblock { padding: 8px 0 26px; break-after: page; }
+.lblock h2 { text-align: center; font-size: 16px; margin: 0 0 4px; }
+.lterm { text-align: right; font-size: 12px; margin-bottom: 6px; }
+table.lhead, table.lgrid { border-collapse: collapse; font-size: 11.5px; }
+table.lhead { margin: 0 auto 8px; }
+table.lhead th, table.lhead td { border: 1px solid var(--fg); padding: 3px 10px; text-align: center; white-space: nowrap; }
+table.lhead th { background: var(--stripe); font-weight: 600; }
+table.lgrid { width: 100%; }
+table.lgrid th, table.lgrid td { border: 1px solid var(--fg); padding: 2px 1px; text-align: center; white-space: nowrap; min-width: 25px; }
+table.lgrid th { background: var(--stripe); font-weight: 600; }
+table.lgrid th.lm { min-width: 36px; }
+table.lgrid td.num { min-width: 34px; }
+table.lgrid td.shade { background: var(--stripe); }
+table.lgrid td.na { background: var(--soft); }
+table.lgrid td.num { text-align: center; }
+.offpage { display: none; }
+
+@media (max-width: 700px) {
+  .emp-layout, .chart-bars { grid-template-columns: 1fr; }
+  .listbox { height: 240px; }
+  .pdref { margin-left: 0; }
+  .report, .ledger { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- 印刷 ---- */
+@page { size: A4 landscape; margin: 8mm; }
+@page rpt { size: A4 portrait; margin: 10mm; }
+@media print {
+  body { background: #fff; color: #000; padding: 0; font-size: 11px; }
+  .no-print, #modals, .print-hide { display: none !important; }
+  .print-only { display: inline; }
+  .cond select { display: none; }
+  .tablewrap, .report, .ledger { border: 0; overflow: visible; max-width: none; }
+  table.grid { min-width: 0; }
+  table.grid th, table.grid td { position: static !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .mtab { clip-path: none; background: #FFFFCC !important; color: #000 !important; }
+  .report { page: rpt; }
+  .offpage { display: block; }
+  .lblock:last-child { break-after: auto; }
+  .chart-bars { break-inside: avoid; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modals"></div>
+<script>
+'use strict';
+const INITIAL_DATA = {"settings":{"company":"丸安青果株式会社","grantWay":"法定","grantDay1":null,"grantDay2":null,"cutOff":"末","startYM":{"y":2021,"m":1},"installDate":"2021-12-16","consumeNewFirst":false},"grantTable":{"0":[10,11,12,14,16,18,20],"1":[1,2,2,2,3,3,3],"2":[3,4,4,5,6,6,7],"3":[5,6,6,8,9,10,11],"4":[7,8,9,10,12,13,15]},"employees":[{"id":2,"no":4,"name":"館坂博美","division":"","section":"","propDiv":0,"joined":"2014-06-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2022-04-30":1,"2022-07-02":1,"2022-07-20":1,"2022-07-21":1,"2022-07-22":1,"2022-07-25":1,"2022-07-26":1,"2022-07-27":1,"2022-07-28":1,"2022-07-29":1,"2023-08-04":1,"2023-08-10":1,"2023-12-30":1,"2024-08-14":1,"2025-11-03":1,"2025-11-24":1,"2025-11-26":1,"2025-11-27":1,"2025-11-28":1}},{"id":3,"no":5,"name":"古川文彦","division":"","section":"","propDiv":0,"joined":"2017-12-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2023-12-29":1,"2023-12-30":1,"2024-04-20":1,"2024-12-28":1,"2024-12-30":1,"2025-08-01":1,"2025-08-15":1}},{"id":4,"no":6,"name":"川野光吉","division":"","section":"","propDiv":0,"joined":"2018-04-11","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2024-12-27":1,"2025-08-22":1,"2025-08-25":1}},{"id":6,"no":8,"name":"森未来子","division":"","section":"","propDiv":0,"joined":"2021-01-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2022-08-13":1,"2022-08-16":1,"2022-12-29":1,"2022-12-30":1,"2023-01-03":1,"2023-01-07":1,"2023-02-26":0,"2023-07-24":1,"2023-07-28":1,"2023-08-03":1,"2023-08-08":1,"2023-08-14":1,"2023-08-15":1,"2023-12-29":1,"2024-01-02":1,"2024-01-03":1,"2024-01-08":1,"2024-02-12":1,"2024-03-21":1,"2024-03-22":1,"2024-06-03":1,"2024-07-18":1,"2024-07-26":1,"2024-07-31":1,"2024-08-06":1,"2024-08-13":1,"2024-08-14":1,"2024-08-15":1,"2024-08-20":1,"2024-12-26":1,"2024-12-30":1,"2024-12-31":1,"2025-01-02":1,"2025-01-03":1,"2025-02-11":1,"2025-03-25":1,"2025-07-25":1,"2025-08-02":1,"2025-08-09":1,"2025-08-16":1,"2025-11-25":1,"2025-11-26":1}},{"id":10,"no":1005,"name":"石井由佳子","division":"","section":"","propDiv":0,"joined":"2017-04-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2022-08-25":1,"2022-08-26":1,"2022-08-29":1,"2022-08-30":1,"2022-08-31":1,"2023-08-08":1,"2023-08-09":1,"2023-08-10":1,"2023-08-12":1,"2023-08-17":1,"2025-03-25":1,"2025-03-26":1,"2025-03-27":1,"2025-03-28":1,"2025-03-31":1,"2025-08-25":1,"2025-08-27":1}},{"id":11,"no":1007,"name":"石井和美","division":"","section":"","propDiv":0,"joined":"2017-04-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2024-03-21":1,"2024-03-22":1,"2024-07-19":1,"2025-03-24":1,"2025-03-25":1,"2025-03-26":1,"2025-03-27":1,"2025-03-28":1,"2025-08-04":1,"2025-08-15":1,"2025-08-18":1,"2025-08-20":1}},{"id":12,"no":1008,"name":"倉重えり子","division":"","section":"","propDiv":0,"joined":"2017-04-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2023-08-01":1,"2023-08-02":1,"2023-08-03":1,"2023-08-04":1,"2023-08-05":1,"2023-08-07":1,"2023-08-09":1,"2023-08-10":1,"2023-08-11":1,"2023-08-12":1,"2025-03-24":1,"2025-03-25":1,"2025-03-26":1,"2025-03-27":1,"2025-03-28":1,"2025-04-01":1,"2025-04-02":1,"2025-04-03":1,"2025-04-04":1,"2025-04-21":1,"2025-04-22":1,"2025-04-23":1,"2025-04-24":1,"2025-04-25":1,"2025-04-28":1,"2025-08-28":1,"2025-08-29":1}},{"id":17,"no":1013,"name":"山口武志","division":"","section":"","propDiv":0,"joined":"2019-01-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{}},{"id":25,"no":12,"name":"河野秋子","division":"","section":"","propDiv":0,"joined":"2022-04-04","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2025-04-01":1,"2025-04-11":1,"2025-04-14":1,"2025-04-15":1,"2025-04-16":1,"2025-04-17":1,"2025-04-18":1,"2025-04-21":1,"2025-04-22":1,"2025-04-23":1}},{"id":26,"no":13,"name":"島袋達也","division":"","section":"","propDiv":0,"joined":"2019-12-10","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2024-12-27":1,"2024-12-30":1,"2024-12-31":1,"2025-08-01":1,"2025-08-05":1}},{"id":28,"no":15,"name":"阿部　夢乃","division":"","section":"","propDiv":0,"joined":"2023-09-01","grantAtJoin":0,"regDate":"2024-04-01","regLeft":10,"regLastYearLeft":0,"lessThan80":{},"usage":{"2024-08-19":1,"2024-08-20":1,"2024-08-21":1,"2024-08-22":1,"2024-08-23":1,"2024-12-27":1,"2024-12-30":1,"2025-03-27":1,"2025-03-28":1}},{"id":29,"no":3,"name":"小谷明彦","division":"","section":"","propDiv":0,"joined":"2019-12-26","grantAtJoin":0,"regDate":"2024-05-26","regLeft":-5,"regLastYearLeft":0,"lessThan80":{},"usage":{"2024-08-01":1,"2024-08-07":1,"2024-08-08":1,"2024-08-09":1,"2024-08-14":1,"2025-08-26":1,"2025-08-28":1}},{"id":31,"no":17,"name":"小椋直子","division":"","section":"","propDiv":0,"joined":"2024-03-15","grantAtJoin":0,"regDate":"2024-08-15","regLeft":0,"regLastYearLeft":0,"lessThan80":{},"usage":{"2024-12-27":1,"2025-03-28":1,"2025-03-31":1}},{"id":32,"no":18,"name":"寒川朋子","division":"","section":"","propDiv":3,"joined":"2023-01-13","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2025-07-24":1,"2025-07-29":1,"2025-08-06":1,"2025-08-25":1}},{"id":33,"no":19,"name":"小川聡","division":"","section":"","propDiv":3,"joined":"2023-08-21","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2025-08-04":1,"2025-08-25":1}},{"id":34,"no":20,"name":"東口進","division":"","section":"","propDiv":4,"joined":"2023-04-26","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{"2025-07-04":1,"2025-07-23":1,"2025-08-22":1,"2025-08-27":1}},{"id":35,"no":21,"name":"澤坂裕佳","division":"","section":"","propDiv":0,"joined":"2025-09-01","grantAtJoin":0,"regDate":"","regLeft":"","regLastYearLeft":"","lessThan80":{},"usage":{}}],"target":{"y":2026,"m":8}};
+/* ===== 有給カレンダー 計算モデル =====
+   日付は UTC の Date で扱う（時差の影響を受けないようにする）。 */
+
+
+// ---------- 日付ユーティリティ ----------
+const DAY_MS = 86400000;
+function mkDate(y, m, d) { return new Date(Date.UTC(y, m - 1, d)); }     // m:1-12
+function Y(dt) { return dt.getUTCFullYear(); }
+function M(dt) { return dt.getUTCMonth() + 1; }
+function D(dt) { return dt.getUTCDate(); }
+function daysInMonth(y, m) { return D(new Date(Date.UTC(y, m, 0))); }
+function eomonth(dt, n) { const y = Y(dt), m = M(dt) + n; return new Date(Date.UTC(y, m, 0)); }
+function addDays(dt, n) { return new Date(dt.getTime() + n * DAY_MS); }
+function addMonths(dt, n) { // Excel EDATE 相当（日は月末で丸める）
+  const y = Y(dt), m = M(dt) - 1 + n, d = D(dt);
+  const first = new Date(Date.UTC(y, m, 1));
+  const dim = daysInMonth(Y(first), M(first));
+  return new Date(Date.UTC(Y(first), M(first) - 1, Math.min(d, dim)));
+}
+function datedifM(a, b) { // Excel DATEDIF(a,b,"m")（満月数）
+  if (b < a) return 0;
+  let n = (Y(b) - Y(a)) * 12 + (M(b) - M(a));
+  if (D(b) < D(a)) n -= 1;
+  return n;
+}
+function monthDiff(a, b) { return (Y(b) - Y(a)) * 12 + (M(b) - M(a)); } // VBA DateDiff("m")
+function iso(dt) { return dt.toISOString().slice(0, 10); }
+function parseISO(s) {
+  if (!s) return null;
+  const m = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/.exec(String(s).trim());
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12 || d < 1 || d > daysInMonth(y, mo)) return null;
+  return mkDate(y, mo, d);
+}
+function cmpYM(y1, m1, y2, m2) { return (y1 - y2) || (m1 - m2); }
+function roundUp1(v) { return Math.ceil(v * 10 - 1e-9) / 10; }
+function fmtJ(dt) { return dt ? `${Y(dt)}/${M(dt)}/${D(dt)}` : '-'; }          // yyyy/m/d
+function fmtMD(dt) { return dt ? `${M(dt)}月${D(dt)}日` : '-'; }
+function fmtYM(dt) { return dt ? `${String(Y(dt)).slice(2)}年${M(dt)}月` : '-'; }
+function fmtWareki(dt) { // [$-411]ge.m.d 相当
+  if (!dt) return '';
+  const eras = [[2019, 5, 1, 'R'], [1989, 1, 8, 'H'], [1926, 12, 25, 'S'], [1912, 7, 30, 'T'], [1868, 1, 25, 'M']];
+  for (const [ey, em, ed, g] of eras) {
+    if (dt >= mkDate(ey, em, ed)) { const n = Y(dt) - ey + 1; return `${g}${n}.${M(dt)}.${D(dt)}`; }
+  }
+  return fmtJ(dt);
+}
+function pad8(no) { const s = String(no ?? '').replace(/\D/g, ''); return s ? s.padStart(8, '0') : ''; }
+function fmt1(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+function fmt2(v) { return (Math.round(v * 100) / 100).toFixed(2); }
+
+// ---------- 付与日数テーブル ----------
+const GRANT_LEVELS = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5];
+const DEFAULT_GRANT_TABLE = {
+  0: [10, 11, 12, 14, 16, 18, 20],   // 一般（フルタイム）
+  1: [1, 2, 2, 2, 3, 3, 3],          // 週1
+  2: [3, 4, 4, 5, 6, 6, 7],          // 週2
+  3: [5, 6, 6, 8, 9, 10, 11],        // 週3
+  4: [7, 8, 9, 10, 12, 13, 15],      // 週4
+};
+function grantDays(table, propDiv, level) { // HLOOKUP 近似一致
+  const row = table[propDiv || 0] || table[0];
+  let v = 0;
+  for (let i = 0; i < GRANT_LEVELS.length; i++) { if (level >= GRANT_LEVELS[i] - 1e-9) v = Number(row[i]) || 0; }
+  return v;
+}
+
+// ---------- 締日による「取得月」 ----------
+function grantMonthKey(dt, cutOff) { // {y,m}
+  if (cutOff === '末' || cutOff === '' || cutOff == null) return { y: Y(dt), m: M(dt) };
+  const c = Number(cutOff);
+  if (D(dt) <= c) return { y: Y(dt), m: M(dt) };
+  return M(dt) === 12 ? { y: Y(dt) + 1, m: 1 } : { y: Y(dt), m: M(dt) + 1 };
+}
+
+// ---------- ケース判定（Mdl_Util の7ケース） ----------
+function caseOf(emp, S) {
+  const H = emp.propDiv > 0 ? 0 : (Number(emp.grantAtJoin) || 0);
+  if (S.grantWay !== '一斉' || !S.grantDay1) return H >= 10 ? 3 : (H > 0 ? 2 : 1);
+  if (!S.grantDay2) return H > 0 ? 5 : 4;
+  return H > 0 ? 7 : 6;
+}
+function uniformDate(y, gd) { return mkDate(y, gd.m, Math.min(gd.d, daysInMonth(y, gd.m))); }
+
+// ---------- 付与イベント ----------
+function grantEvents(emp, S, table, until) {
+  const hire = parseISO(emp.joined); if (!hire) return [];
+  const V = caseOf(emp, S);
+  const ev = [];
+  const push = (date, level, kind) => ev.push({ date, level, days: grantDays(table, emp.propDiv, level), kind });
+  if (V === 1 || V === 2 || V === 3) {
+    let cur = V === 3 ? hire : addMonths(hire, 6), level = 0.5;
+    while (cur <= until) { push(cur, level, V === 3 ? '入社時' : '法定'); cur = addMonths(cur, 12); level += 1; }
+  } else if (V === 4 || V === 5) {
+    const first = addMonths(hire, 6);
+    if (first <= until) push(first, 0.5, '法定');
+    let g = uniformDate(Y(first), S.grantDay1);
+    if (g <= first) g = uniformDate(Y(first) + 1, S.grantDay1);
+    let level = 1.5;
+    while (g <= until) { push(g, level, '一斉'); g = uniformDate(Y(g) + 1, S.grantDay1); level += 1; }
+  } else {
+    // 一斉2回：入社日より後の最初の一斉付与日、以後その日の毎年
+    const cands = [];
+    for (const yy of [Y(hire), Y(hire) + 1]) { cands.push(uniformDate(yy, S.grantDay1)); cands.push(uniformDate(yy, S.grantDay2)); }
+    cands.sort((a, b) => a - b);
+    let first = cands.find(c => c > hire);
+    let level = 0.5, g = first;
+    const gd = { m: M(first), d: D(first) };
+    while (g <= until) { push(g, level, '一斉'); g = uniformDate(Y(g) + 1, gd); level += 1; }
+  }
+  return ev;
+}
+
+// ---------- 期間（付与から次の付与前日まで）と残数計算 ----------
+function buildPeriods(emp, S, table, until) {
+  const hire = parseISO(emp.joined); if (!hire) return { periods: [], events: [] };
+  const events = grantEvents(emp, S, table, until);
+  const flagged = emp.lessThan80 || {};
+  const periods = [];
+  const H = emp.propDiv > 0 ? 0 : (Number(emp.grantAtJoin) || 0);
+  if (events.length && H > 0 && events[0].date > hire) {
+    periods.push({ start: hire, end: addDays(events[0].date, -1), grant: H, tableDays: H, pre: true, event: null });
+  } else if (!events.length && H > 0) {
+    periods.push({ start: hire, end: mkDate(9999, 12, 31), grant: H, tableDays: H, pre: true, event: null });
+  }
+  events.forEach((e, i) => {
+    const end = i + 1 < events.length ? addDays(events[i + 1].date, -1) : mkDate(9999, 12, 31);
+    const isFlag = !!flagged[iso(e.date)];
+    periods.push({ start: e.date, end, grant: isFlag ? 0 : e.days, tableDays: e.days, flagged: isFlag, pre: false, event: e });
+  });
+  // 有給日数登録（登録日付・登録時有給残・うち前年繰越）
+  const reg = parseISO(emp.regDate);
+  if (reg && emp.regLeft !== '' && emp.regLeft != null && emp.regLeft !== '-') {
+    const AJ = Number(emp.regLeft) || 0;
+    const AK = (emp.regLastYearLeft === '' || emp.regLastYearLeft == null || emp.regLastYearLeft === '-') ? 0 : (Number(emp.regLastYearLeft) || 0);
+    let p = periods.find(x => x.start <= reg && reg <= x.end);
+    if (!p && periods.length && reg < periods[0].start) {
+      // 最初の付与より前に登録：登録日から最初の付与前日までを登録残で運用
+      p = { start: reg, end: addDays(periods[0].start, -1), grant: AJ, tableDays: AJ, pre: true, event: null, reg: true };
+      periods.unshift(p);
+    }
+    if (p) { p.reg = true; p.regDate = reg; p.carriedInFixed = Math.max(0, Math.min(AK, AJ)); p.grant = Math.max(0, AJ - Math.max(0, Math.min(AK, AJ))); p.usageFrom = reg; }
+  }
+  return { periods, events, hire, regDate: reg };
+}
+
+function sumUsage(usage, from, to) { // from..to（両端含む）
+  let s = 0;
+  if (!usage || to < from) return 0;
+  // 日数が少なければ総当たり
+  for (const k in usage) { const v = Number(usage[k]); if (!v) continue; const dt = parseISO(k); if (dt && dt >= from && dt <= to) s += v; }
+  return s;
+}
+function usedInPeriod(emp, p, T) {
+  const from = p.usageFrom && p.usageFrom > p.start ? p.usageFrom : p.start;
+  const to = T < p.end ? T : p.end;
+  return sumUsage(emp.usage, from, to);
+}
+function carriedIn(emp, periods, idx, S) {
+  const p = periods[idx];
+  if (p.carriedInFixed != null) return p.carriedInFixed;
+  if (p.pre) return 0;
+  for (let i = idx - 1; i >= 0; i--) { const q = periods[i]; if (q.pre) return 0; return carryOut(emp, periods, i, q.end, S); }
+  return 0;
+}
+function carryOut(emp, periods, idx, T, S) {
+  const p = periods[idx];
+  if (p.pre) return 0;
+  const used = usedInPeriod(emp, p, T);
+  const cin = carriedIn(emp, periods, idx, S);
+  if (S.consumeNewFirst) return Math.max(0, p.grant - used);
+  return Math.min(p.grant, Math.max(0, p.grant + cin - used));
+}
+function balance(emp, periods, idx, T, S) {
+  const p = periods[idx];
+  const used = usedInPeriod(emp, p, T);
+  return Math.max(0, p.grant + carriedIn(emp, periods, idx, S) - used);
+}
+function currentPeriodIndex(periods, S, ty, tm) {
+  let idx = -1;
+  periods.forEach((p, i) => { const k = grantMonthKey(p.start, S.cutOff); if (cmpYM(k.y, k.m, ty, tm) <= 0) idx = i; });
+  return idx;
+}
+function periodMonths(p) { return datedifM(p.start, addDays(p.end, 1)); }
+function dutyDays(p) { // 義務日数（12ヶ月超はダブルトラック分を加算）
+  const mo = periodMonths(p);
+  if (mo <= 12) return 5;
+  const v = mo / 12 * 5, f = v - Math.floor(v);
+  return f > 0.5 ? Math.floor(v) + 1 : Math.floor(v) + 0.5;
+}
+
+// ---------- 社員1人分の表示値（有給管理簿・社員情報フォーム） ----------
+function computeEmployee(emp, S, table, ty, tm) {
+  const hire = parseISO(emp.joined);
+  const r = { emp, hire, no: pad8(emp.no), name: emp.name, propDiv: emp.propDiv || 0 };
+  const T = eomonth(mkDate(ty, tm, 1), 0);
+  const first = mkDate(ty, tm, 1);
+  r.serviceYears = (!hire || first < hire) ? 0 : roundUp1(datedifM(hire, first) / 12);
+  r.months = []; for (let m = 1; m <= 12; m++) r.months.push(sumUsage(emp.usage, mkDate(ty, m, 1), eomonth(mkDate(ty, m, 1), 0)));
+  r.yearTotal = r.months.reduce((a, b) => a + b, 0);
+  const until = mkDate(ty + 1, 12, 31);
+  const { periods, events } = buildPeriods(emp, S, table, until);
+  r.periods = periods; r.events = events;
+  // 本年取得日
+  const evY = events.filter(e => Y(e.date) === ty);
+  let ge = evY.find(e => M(e.date) >= tm) || evY[evY.length - 1] || null;
+  r.grantDate = ge ? ge.date : null;
+  r.grantMonth = ge ? grantMonthKey(ge.date, S.cutOff).m : null;
+  r.grantDaysYear = evY.reduce((a, e) => a + (emp.lessThan80 && emp.lessThan80[iso(e.date)] ? 0 : e.days), 0);
+  r.flaggedDates = evY.filter(e => emp.lessThan80 && emp.lessThan80[iso(e.date)]).map(e => e.date);
+  // 現在の期間
+  const ci = currentPeriodIndex(periods, S, ty, tm);
+  r.cp = ci >= 0 ? periods[ci] : null;
+  if (r.cp && (!hire || T < hire)) r.cp = null;
+  r.left = r.cp ? balance(emp, periods, ci, T, S) : 0;              // 現在残
+  r.carryOver = r.cp ? carryOut(emp, periods, ci, T, S) : 0;        // 繰越日数（翌年へ）
+  r.lastYearLeft = r.cp ? carriedIn(emp, periods, ci, S) : 0;       // 昨年残
+  // 取得義務
+  r.duty = null;
+  if (r.cp && !r.cp.pre && r.cp.grant >= 10 && r.cp.end >= first && hire && hire <= first) {
+    const need = dutyDays(r.cp);
+    const got = usedInPeriod(emp, r.cp, T);
+    r.duty = { start: r.cp.start, end: r.cp.end, need, got, remain: Math.max(0, need - got) };
+  }
+  return r;
+}
+
+// ---------- 分析レポート ----------
+function reportRow(emp, S, table, firstDate, endDate, ty, tm) {
+  const hire = parseISO(emp.joined);
+  const c = computeEmployee(emp, S, table, ty, tm);
+  let sy = roundUp1(monthDiff(hire, addDays(eomonth(endDate, -1), 1)) / 12);
+  if (D(hire) > 1 && M(hire) !== M(endDate)) sy = Math.round((sy - 0.1) * 10) / 10;
+  if (sy < 0) sy = 0;
+  const used = sumUsage(emp.usage, firstDate, endDate);
+  const lastUsed = sumUsage(emp.usage, addMonths(firstDate, -12), addDays(firstDate, -1));
+  const grant = c.grantDaysYear;
+  return { emp, name: emp.name, hire, serviceYears: sy, grant, used, rate: grant > 0 ? used / grant : null, lastUsed, calc: c };
+}
+
+/* ===== 有給カレンダー UI ===== */
+
+
+// ---------- 状態 ----------
+const STORAGE_KEY = 'yukyuCalendar.v1';
+let state;
+
+function todayUTC() { const n = new Date(); return mkDate(n.getFullYear(), n.getMonth() + 1, n.getDate()); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function newState() {
+  const t = todayUTC();
+  return {
+    settings: { company: '', grantWay: '法定', grantDay1: null, grantDay2: null, cutOff: '末', startYM: null, installDate: iso(t), consumeNewFirst: false },
+    grantTable: clone(DEFAULT_GRANT_TABLE),
+    employees: [], target: { y: Y(t), m: M(t) },
+    report: null, ledger: null,
+  };
+}
+function normalizeState(s) {
+  const base = newState();
+  const out = Object.assign(base, s || {});
+  out.settings = Object.assign(base.settings, (s && s.settings) || {});
+  out.grantTable = Object.assign(clone(DEFAULT_GRANT_TABLE), (s && s.grantTable) || {});
+  out.employees = (out.employees || []).map(e => Object.assign({ id: 0, no: '', name: '', division: '', section: '', propDiv: 0, joined: '', grantAtJoin: 0, regDate: '', regLeft: '', regLastYearLeft: '', lessThan80: {}, usage: {} }, e));
+  out.target = out.target || base.target;
+  return out;
+}
+function loadState() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return normalizeState(JSON.parse(s)); } catch (e) { }
+  return normalizeState(clone(INITIAL_DATA));
+}
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { } }
+
+const S = () => state.settings;
+const TBL = () => state.grantTable;
+const emps = () => state.employees;
+function empById(id) { return state.employees.find(e => e.id === id); }
+function nextId() { return state.employees.reduce((a, e) => Math.max(a, e.id || 0), 0) + 1; }
+function yearList() {
+  const t = todayUTC();
+  let lo = S().startYM ? S().startYM.y - 1 : Y(t) - 1;
+  let hi = Math.max(S().startYM ? S().startYM.y + 4 : Y(t) + 1, Y(t) + 1, state.target.y);
+  for (const e of state.employees) for (const k in e.usage) { const y = +k.slice(0, 4); if (y < lo) lo = y; if (y > hi) hi = y; }
+  const arr = []; for (let y = lo; y <= hi; y++) arr.push(y); return arr;
+}
+
+// ---------- 小道具 ----------
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function opts(list, sel) { return list.map(v => `<option value="${esc(v)}"${String(v) === String(sel) ? ' selected' : ''}>${esc(v)}</option>`).join(''); }
+function propDivLabel(v) { return v > 0 ? String(v) : ''; }
+function todayISO() { return iso(todayUTC()); }
+function stamp() { const n = new Date(); const p = v => String(v).padStart(2, '0'); return `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`; }
+
+// ---------- モーダル ----------
+const modalRoot = () => $('#modals');
+function openModal({ title, body, cls = '', onClose }) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-wrap';
+  wrap.innerHTML = `<div class="modal ${cls}" role="dialog" aria-label="${esc(title)}"><div class="modal-title"><span>${esc(title)}</span><button type="button" class="modal-x" aria-label="閉じる">×</button></div><div class="modal-body"></div></div>`;
+  const bodyEl = $('.modal-body', wrap);
+  if (typeof body === 'string') bodyEl.innerHTML = body; else bodyEl.appendChild(body);
+  wrap.close = async () => { if (onClose && (await onClose()) === false) return; wrap.remove(); };
+  $('.modal-x', wrap).addEventListener('click', () => wrap.close());
+  modalRoot().appendChild(wrap);
+  const f = $('input:not([type=hidden]),select,button.primary,button', bodyEl); if (f) f.focus();
+  return wrap;
+}
+function msgBox(text, title = '', kind = 'info') {
+  return new Promise(res => {
+    const w = openModal({ title: title || 'お知らせ', cls: 'msg', body: `<div class="msg-body ${kind}"><span class="msg-icon">${kind === 'warn' ? '!' : kind === 'error' ? '×' : 'i'}</span><div class="msg-text">${esc(text).replace(/\n/g, '<br>')}</div></div><div class="btns right"><button type="button" class="btn primary" data-ok>OK</button></div>` });
+    $('[data-ok]', w).focus();
+    $('[data-ok]', w).addEventListener('click', () => { w.remove(); res(); });
+    w.close = () => { w.remove(); res(); };
+  });
+}
+function askYesNo(text, title = '', defaultNo = false) {
+  return new Promise(res => {
+    const w = openModal({ title: title || '確認', cls: 'msg', body: `<div class="msg-body ask"><span class="msg-icon">?</span><div class="msg-text">${esc(text).replace(/\n/g, '<br>')}</div></div><div class="btns right"><button type="button" class="btn${defaultNo ? '' : ' primary'}" data-yes>はい</button><button type="button" class="btn${defaultNo ? ' primary' : ''}" data-no>いいえ</button></div>` });
+    $(defaultNo ? '[data-no]' : '[data-yes]', w).focus();
+    $('[data-yes]', w).addEventListener('click', () => { w.remove(); res(true); });
+    $('[data-no]', w).addEventListener('click', () => { w.remove(); res(false); });
+    w.close = () => { w.remove(); res(false); };
+  });
+}
+
+// ---------- ルーティング ----------
+let view = 'main';
+let calMonth = null; // 有給使用日入力カレンダー表示中の月
+function render() {
+  const app = $('#app');
+  if (view === 'main') app.innerHTML = renderMain();
+  else if (view === 'report') app.innerHTML = renderReport();
+  else if (view === 'ledger') app.innerHTML = renderLedger();
+  else if (view === 'input') app.innerHTML = renderInputSheet();
+  document.body.dataset.view = view;
+  afterRender();
+}
+function go(v) { view = v; render(); window.scrollTo(0, 0); }
+
+// ---------- 有給管理簿（メイン） ----------
+function computeAll() { return state.employees.map(e => computeEmployee(e, S(), TBL(), state.target.y, state.target.m)); }
+function renderMain() {
+  const s = S(), ty = state.target.y, tm = state.target.m;
+  const gd = (g) => g ? `${g.m}/${g.d}` : '-';
+  const head = `
+  <header class="topbar no-print">
+    <div class="brand">有給カレンダー</div>
+    <div class="topbtns">
+      <button type="button" class="btn" data-act="print">印刷</button>
+      <button type="button" class="btn" data-act="restore">データ復元</button>
+      <button type="button" class="btn" data-act="save">保存</button>
+      <button type="button" class="btn" data-act="csvImport">CSV取込</button>
+      <button type="button" class="btn" data-act="csvExport">CSV出力</button>
+    </div>
+  </header>
+  <div class="panelrow no-print">
+    <div class="box box-blue"><div class="box-label">基本項目登録</div><div class="box-btns"><button type="button" class="btn" data-act="base">会社情報</button><button type="button" class="btn" data-act="employees">社員情報</button></div></div>
+    <div class="box box-green"><div class="box-label">有給処理</div><div class="box-btns"><button type="button" class="btn" data-act="ledger">管理簿作成</button><button type="button" class="btn" data-act="report">分析レポート作成</button><button type="button" class="btn" data-act="clear">クリア</button></div></div>
+  </div>
+  <div class="company">${esc(s.company)}</div>
+  <div class="cond">
+    <label>年 <select id="selYear" class="no-print-sel">${opts(yearList(), ty)}</select><span class="print-only">${ty}</span></label>
+    <label>月 <select id="selMonth">${opts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], tm)}</select><span class="print-only">${tm}</span></label>
+    <span class="kv"><b>付与方法</b>${esc(s.grantWay)}</span>
+    <span class="kv"><b>付与日1</b>${s.grantWay === '一斉' ? gd(s.grantDay1) : '-'}</span>
+    <span class="kv"><b>付与日2</b>${s.grantWay === '一斉' ? gd(s.grantDay2) : '-'}</span>
+    <span class="kv"><b>締日</b>${esc(s.cutOff)}日</span>
+    ${calMonth ? `<span class="calmode">${ty}年${calMonth}月 有給使用日入力 <button type="button" class="btn dark" data-act="back">戻る</button></span>` : ''}
+  </div>`;
+  return head + (calMonth ? renderCalendarTable() : renderSummaryTable());
+}
+function renderSummaryTable() {
+  const rows = computeAll();
+  const tm = state.target.m;
+  let h = `<div class="tablewrap"><table class="grid main">
+  <thead><tr>
+    <th class="c-no sticky1">社員NO</th><th class="c-name sticky2">氏名</th><th class="c-pd">比例<br>区分</th><th class="c-join">入社日</th><th>在職年数</th><th>本年<br>取得日</th><th>本年<br>取得月</th><th>本年<br>付与日数</th><th>繰越<br>日数</th>`;
+  for (let m = 1; m <= 12; m++) h += `<th class="mcol"><button type="button" class="mtab${m === tm ? ' cur' : ''}" data-month="${m}" title="${m}月の有給使用日入力カレンダーを開く">${m}月</button></th>`;
+  h += `<th class="c-blue">年間計</th><th class="c-blue">取得義務日数</th><th class="c-blue">義務期間<br>開始</th><th class="c-blue">義務期間<br>終了</th><th class="c-blue">現在残</th></tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    const duty = r.duty;
+    h += `<tr class="${i % 2 ? 'odd' : ''}">
+      <td class="c-no sticky1 mono">${esc(r.no)}</td><td class="c-name sticky2">${esc(r.name)}</td><td class="num">${propDivLabel(r.propDiv)}</td><td class="num">${esc(fmtWareki(r.hire))}</td>
+      <td class="num blue">${fmt1(r.serviceYears)} 年</td><td class="num">${r.grantDate ? fmtMD(r.grantDate) : '-'}</td><td class="num">${r.grantMonth ? r.grantMonth + '月' : '-'}</td><td class="num blue">${r.grantDaysYear}</td><td class="num blue">${fmt1(r.carryOver)}</td>`;
+    for (let m = 1; m <= 12; m++) h += `<td class="num mval">${r.months[m - 1] ? r.months[m - 1] : ''}</td>`;
+    h += `<td class="num blue">${fmt2(r.yearTotal)}</td><td class="num blue">${duty ? (duty.remain <= 0 ? 'OK' : `残り ${fmt1(duty.remain)}日`) : '-'}</td><td class="num blue">${duty ? fmtYM(duty.start) : '-'}</td><td class="num blue">${duty ? fmtYM(duty.end) : '-'}</td><td class="num blue">${fmt1(r.left)}</td></tr>`;
+  });
+  if (!rows.length) h += `<tr><td class="empty" colspan="26">社員が登録されていません</td></tr>`;
+  return h + `</tbody></table></div>`;
+}
+function renderCalendarTable() {
+  const rows = computeAll();
+  const ty = state.target.y, m = calMonth, dim = daysInMonth(ty, m);
+  const wd = ['日', '月', '火', '水', '木', '金', '土'];
+  let h = `<div class="tablewrap"><table class="grid main cal"><thead><tr>
+    <th class="c-no sticky1" rowspan="2">社員NO</th><th class="c-name sticky2" rowspan="2">氏名</th><th class="c-pd" rowspan="2">比例<br>区分</th><th class="c-join" rowspan="2">入社日</th><th rowspan="2">在職年数</th><th rowspan="2">本年<br>取得日</th><th rowspan="2">本年<br>取得月</th>`;
+  for (let d = 1; d <= dim; d++) h += `<th class="dcol">${d}</th>`;
+  h += `<th class="c-blue" rowspan="2">現在残</th></tr><tr class="wdrow">`;
+  for (let d = 1; d <= dim; d++) { const w = mkDate(ty, m, d).getUTCDay(); h += `<th class="dcol wd${w}">${wd[w]}</th>`; }
+  h += `</tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    h += `<tr class="${i % 2 ? 'odd' : ''}"><td class="c-no sticky1 mono">${esc(r.no)}</td><td class="c-name sticky2">${esc(r.name)}</td><td class="num">${propDivLabel(r.propDiv)}</td><td class="num">${esc(fmtWareki(r.hire))}</td><td class="num blue">${fmt1(r.serviceYears)} 年</td><td class="num">${r.grantDate ? fmtMD(r.grantDate) : '-'}</td><td class="num">${r.grantMonth ? r.grantMonth + '月' : '-'}</td>`;
+    for (let d = 1; d <= dim; d++) {
+      const key = iso(mkDate(ty, m, d)); const v = r.emp.usage[key]; const w = mkDate(ty, m, d).getUTCDay();
+      h += `<td class="cal-cell wd${w}" tabindex="0" data-id="${r.emp.id}" data-date="${key}">${v ? v : (v === 0 ? '0' : '')}</td>`;
+    }
+    h += `<td class="num blue" data-left="${r.emp.id}">${fmt1(r.left)}</td></tr>`;
+  });
+  return h + `</tbody></table></div>`;
+}
+function setUsage(id, key, val) {
+  const e = empById(id); if (!e) return;
+  if (val === '' || val == null) delete e.usage[key]; else e.usage[key] = val;
+  save();
+}
+function cycleUsage(cell) {
+  const e = empById(+cell.dataset.id); const key = cell.dataset.date; const v = e.usage[key];
+  const nv = (v === undefined || v === 0) ? 1 : (v === 1 ? 0.5 : '');
+  setUsage(e.id, key, nv); cell.textContent = nv === '' ? '' : String(nv); refreshLeft(e.id);
+}
+function refreshLeft(id) {
+  const e = empById(id); const c = computeEmployee(e, S(), TBL(), state.target.y, state.target.m);
+  const td = $(`[data-left="${id}"]`); if (td) td.textContent = fmt1(c.left);
+}
+
+// ---------- イベント ----------
+function afterRender() {
+  const app = $('#app');
+  app.onclick = (ev) => {
+    const b = ev.target.closest('[data-act]'); if (b) { handleAct(b.dataset.act, b); return; }
+    const mt = ev.target.closest('.mtab'); if (mt) { calMonth = +mt.dataset.month; render(); return; }
+    const cell = ev.target.closest('.cal-cell'); if (cell) { cycleUsage(cell); cell.focus(); return; }
+    const emp = ev.target.closest('[data-empsel]'); if (emp) return;
+  };
+  app.onkeydown = (ev) => {
+    const cell = ev.target.closest && ev.target.closest('.cal-cell'); if (!cell) return;
+    const e = empById(+cell.dataset.id); const key = cell.dataset.date;
+    const setv = (v) => { setUsage(e.id, key, v); cell.textContent = v === '' ? '' : String(v); refreshLeft(e.id); ev.preventDefault(); };
+    if (ev.key === '1') setv(1);
+    else if (ev.key === '5' || ev.key === '.') setv(0.5);
+    else if (ev.key === '0' || ev.key === 'Delete' || ev.key === 'Backspace') setv('');
+    else if (ev.key === 'Enter' || ev.key === ' ') { cycleUsage(cell); ev.preventDefault(); }
+    else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key)) {
+      const td = cell, tr = td.parentElement; let t = null;
+      if (ev.key === 'ArrowLeft') t = td.previousElementSibling;
+      if (ev.key === 'ArrowRight') t = td.nextElementSibling;
+      if (ev.key === 'ArrowUp' && tr.previousElementSibling) t = tr.previousElementSibling.children[td.cellIndex];
+      if (ev.key === 'ArrowDown' && tr.nextElementSibling) t = tr.nextElementSibling.children[td.cellIndex];
+      if (t && t.classList.contains('cal-cell')) { t.focus(); ev.preventDefault(); }
+    }
+  };
+  const sy = $('#selYear'), sm = $('#selMonth');
+  if (sy) sy.onchange = () => { state.target.y = +sy.value; save(); render(); };
+  if (sm) sm.onchange = () => { state.target.m = +sm.value; save(); render(); };
+  const inp = $('#inputsheet'); if (inp) bindInputSheet(inp);
+  const pg = $('#pageSel'); if (pg) pg.onchange = () => { ledgerPage = +pg.value; render(); };
+}
+async function handleAct(act, btn) {
+  switch (act) {
+    case 'print': await printCurrent(); break;
+    case 'save': saveBackup(); break;
+    case 'restore': openRestore(); break;
+    case 'csvImport': openCsvImport(); break;
+    case 'csvExport': openCsvExport(); break;
+    case 'base': openBaseSetting(); break;
+    case 'employees': openEmployeeInfo(); break;
+    case 'ledger': go('ledger'); break;
+    case 'report': go('report'); break;
+    case 'clear': clearAll(); break;
+    case 'back': calMonth = null; render(); break;
+    case 'top': go('main'); break;
+    case 'makeReport': openReportTerm(); break;
+    case 'pdfReport': if (!state.report) { await msgBox('pdf出力の前に、レポート作成を行ってください。', 'レポート未作成', 'warn'); return; } if (await askYesNo('pdf出力を実行しますか？', 'pdf出力確認')) window.print(); break;
+    case 'makeLedger': openLedgerCondition(); break;
+    case 'pagePrev': if (ledgerPage <= 1) { await msgBox('これより前のページはありません。', 'ページ指定不可', 'warn'); return; } ledgerPage--; render(); break;
+    case 'pageNext': if (!state.ledger || ledgerPage >= state.ledger.pages.length) { await msgBox('これより先のページはありません。', 'ページ指定不可', 'warn'); return; } ledgerPage++; render(); break;
+    case 'inputRegister': await registerBySheet(); break;
+    case 'inputBack': await backFromInputSheet(); break;
+    case 'inputAddRow': inputRows.push(emptyInputRow()); render(); break;
+  }
+}
+async function printCurrent() {
+  if (!(await askYesNo('印刷を実行しますか？', '印刷確認'))) return;
+  window.print();
+}
+function saveBackup() {
+  const name = `有給DATA_${(S().company || '会社名未設定').replace(/[\\\/:*?"<>|]/g, '')}_${stamp()}.json`;
+  const payload = Object.assign({}, state, { savedAt: new Date().toISOString(), app: '有給カレンダー' });
+  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  msgBox('保存しました。', '保存完了');
+}
+async function clearAll() {
+  if (!(await askYesNo('入力されている「会社情報」「社員情報」をすべてクリアしますか？\n※保存済みのデータ復元用ファイルはクリアされません。', '入力データクリア'))) return;
+  state = newState(); calMonth = null; save(); go('main');
+}
+
+// ---------- データ復元 ----------
+function openRestore() {
+  const w = openModal({ title: 'データ復元', cls: 'w-md', body: `
+    <div class="form">
+      <div class="frow"><label>復元するファイル</label><input type="file" id="restoreFile" accept=".json,application/json"></div>
+      <div id="restoreInfo" class="restore-info"></div>
+      <div class="btns right"><button type="button" class="btn primary" id="restoreExe" disabled>復元実行</button><button type="button" class="btn" id="restoreCancel">キャンセル</button></div>
+    </div>` });
+  let loaded = null;
+  $('#restoreFile', w).addEventListener('change', (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const obj = JSON.parse(rd.result);
+        if (!obj || !obj.settings || !Array.isArray(obj.employees)) throw new Error('形式');
+        loaded = obj;
+        const st = obj.savedAt ? new Date(obj.savedAt) : null;
+        $('#restoreInfo', w).innerHTML = `<table class="kvtable"><tr><th>会社名</th><td>${esc(obj.settings.company || '')}</td></tr><tr><th>保存日時</th><td>${st ? st.toLocaleString('ja-JP') : '-'}</td></tr><tr><th>ファイル名</th><td>${esc(f.name)}</td></tr><tr><th>社員数</th><td>${obj.employees.length}人</td></tr></table>`;
+        $('#restoreExe', w).disabled = false;
+      } catch (e) { loaded = null; $('#restoreExe', w).disabled = true; $('#restoreInfo', w).innerHTML = `<div class="err">復元できるファイルではありません。</div>`; }
+    };
+    rd.readAsText(f);
+  });
+  $('#restoreCancel', w).addEventListener('click', () => w.close());
+  $('#restoreExe', w).addEventListener('click', async () => {
+    if (!loaded) return;
+    if (!(await askYesNo('現在のデータは復元するファイルの内容で上書きされます。\n復元してよろしいですか？', '復元確認', true))) return;
+    state = normalizeState(loaded); calMonth = null; save(); w.remove(); go('main');
+    msgBox('復元が完了しました。', '復元完了');
+  });
+}
+
+// ---------- 会社情報（基本設定） ----------
+function openBaseSetting() {
+  const s = S(); const t = todayUTC();
+  const startSet = !!s.startYM;
+  const ys = []; for (let y = Y(t) - 15; y <= Y(t) + 1; y++) ys.push(y);
+  const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const days = []; for (let d = 1; d <= 31; d++) days.push(d);
+  const cutList = []; for (let d = 1; d <= 30; d++) cutList.push(d); cutList.push('末');
+  const gt = TBL();
+  const tblRows = [['一般', 0], ['区分1', 1], ['区分2', 2], ['区分3', 3], ['区分4', 4]].map(([lab, k]) => `<tr><th>${lab}</th>${GRANT_LEVELS.map((lv, i) => `<td><input type="number" min="0" max="40" step="1" data-gt="${k}" data-i="${i}" value="${esc(gt[k][i])}"></td>`).join('')}</tr>`).join('');
+  const w = openModal({ title: '会社情報', cls: 'w-lg', body: `
+    <div class="tabs"><button type="button" class="tab cur" data-tab="base">基本情報</button><button type="button" class="tab" data-tab="table">有給付与日数表</button></div>
+    <div class="tabpane" data-pane="base">
+      <div class="form">
+        <div class="frow"><label>会社名</label><input type="text" id="bsCompany" value="${esc(s.company)}" maxlength="60"></div>
+        <div class="frow"><label>締日</label><select id="bsCut">${opts(cutList, s.cutOff)}</select><span>日</span></div>
+        <div class="frow"><label>登録開始年月</label><select id="bsYear" ${startSet ? 'disabled' : ''}>${opts(ys, startSet ? s.startYM.y : Y(t))}</select><span>年</span><select id="bsMonth" ${startSet ? 'disabled' : ''}>${opts(months, startSet ? s.startYM.m : M(t))}</select><span>月</span>${startSet ? '<span class="note">初回設定後は変更できません</span>' : ''}</div>
+        <fieldset class="fset"><legend>付与方法</legend>
+          <div class="frow radios"><label><input type="radio" name="bsWay" value="法定" ${s.grantWay !== '一斉' ? 'checked' : ''}>法定付与</label><label><input type="radio" name="bsWay" value="一斉" ${s.grantWay === '一斉' ? 'checked' : ''}>一斉付与</label></div>
+          <div id="bsUniform" class="${s.grantWay === '一斉' ? '' : 'hide'}">
+            <div class="frow"><label>付与日1</label><select id="bsG1m">${opts(months, s.grantDay1 ? s.grantDay1.m : '')}</select><span>月</span><select id="bsG1d">${opts(days, s.grantDay1 ? s.grantDay1.d : '')}</select><span>日</span></div>
+            <div class="frow"><label>付与日2</label><select id="bsG2m">${opts(['-', ...months], s.grantDay2 ? s.grantDay2.m : '-')}</select><span>月</span><select id="bsG2d">${opts(['-', ...days], s.grantDay2 ? s.grantDay2.d : '-')}</select><span>日</span></div>
+          </div>
+        </fieldset>
+        <div class="btns right"><button type="button" class="btn primary" id="bsRegister">登録</button></div>
+      </div>
+    </div>
+    <div class="tabpane hide" data-pane="table">
+      <div class="tablewrap"><table class="grid gtable"><thead><tr><th>継続勤務年数</th>${GRANT_LEVELS.map((v, i) => `<th>${v}${i === GRANT_LEVELS.length - 1 ? '以上' : ''}</th>`).join('')}</tr></thead><tbody>${tblRows}</tbody></table></div>
+      <div class="btns right"><button type="button" class="btn primary" id="bsChangeTable">変更</button></div>
+    </div>` });
+  $$('.tab', w).forEach(b => b.addEventListener('click', () => { $$('.tab', w).forEach(x => x.classList.toggle('cur', x === b)); $$('.tabpane', w).forEach(p => p.classList.toggle('hide', p.dataset.pane !== b.dataset.tab)); }));
+  $$('input[name=bsWay]', w).forEach(r => r.addEventListener('change', () => { $('#bsUniform', w).classList.toggle('hide', $('input[name=bsWay]:checked', w).value !== '一斉'); }));
+  $('#bsRegister', w).addEventListener('click', async () => {
+    const company = $('#bsCompany', w).value.trim();
+    if (!company) { await msgBox('会社名を入力してください。', '会社名入力確認', 'warn'); return; }
+    const way = $('input[name=bsWay]:checked', w).value;
+    let g1 = null, g2 = null;
+    if (way === '一斉') {
+      const m1 = +$('#bsG1m', w).value, d1 = +$('#bsG1d', w).value;
+      if (!m1 || !d1) { await msgBox('一斉付与日を入力してください。', '一斉付与日入力確認', 'warn'); return; }
+      g1 = { m: m1, d: Math.min(d1, daysInMonth(2001, m1)) };
+      const m2 = $('#bsG2m', w).value, d2 = $('#bsG2d', w).value;
+      if (m2 !== '-' && d2 !== '-') g2 = { m: +m2, d: Math.min(+d2, daysInMonth(2001, +m2)) };
+      if (g2 && g2.m === g1.m && g2.d === g1.d) g2 = null;
+    }
+    const sNew = S();
+    if (!sNew.startYM) {
+      const yy = +$('#bsYear', w).value, mm = +$('#bsMonth', w).value;
+      if (!(await askYesNo(`登録開始月は「${yy}年${mm}月」でよろしいですか？`, '登録開始月確認'))) return;
+      sNew.startYM = { y: yy, m: mm };
+      if (!state.target || !state.target.y) state.target = { y: yy, m: mm };
+    }
+    sNew.company = company; sNew.cutOff = $('#bsCut', w).value; sNew.grantWay = way; sNew.grantDay1 = g1; sNew.grantDay2 = g2;
+    save();
+    await msgBox('登録が完了しました。', '登録完了');
+    if (await askYesNo('「基本設定」を閉じてよろしいですか？', '基本設定終了確認')) { w.remove(); render(); }
+  });
+  $('#bsChangeTable', w).addEventListener('click', async () => {
+    if (!(await askYesNo('付与日数テーブルを変更してよろしいでしょうか？\n（社員が登録された状態で変更すると、有給日数の計算結果が変わります）', '付与日数テーブル変更確認'))) { await msgBox('処理を中断します。', '処理中断', 'warn'); return; }
+    $$('input[data-gt]', w).forEach(i => { TBL()[i.dataset.gt][+i.dataset.i] = Math.max(0, Number(i.value) || 0); });
+    save(); render(); await msgBox('処理が完了しました。', '処理完了');
+  });
+}
+
+// ---------- 社員情報 ----------
+let empSel = null; // 選択中 id
+let empFilter = null; // 検索結果 id 配列
+function openEmployeeInfo() {
+  if (!S().company) { msgBox('はじめに「会社情報」を登録してください。', '会社情報未登録', 'warn'); return; }
+  empFilter = null;
+  const w = openModal({ title: '社員情報', cls: 'w-xl', body: `<div class="emp-layout"><div class="emp-left"><div class="listbox" id="empList"></div></div><div class="emp-right"><div class="listbox" id="empDetail"></div></div></div>
+    <div class="btns wrap">
+      <label class="chk"><input type="checkbox" id="empAll" checked>社員全表示</label>
+      <button type="button" class="btn" data-e="new">新規登録</button><button type="button" class="btn" data-e="search">社員検索</button><button type="button" class="btn" data-e="edit">項目編集</button><button type="button" class="btn" data-e="delete">社員削除</button><button type="button" class="btn" data-e="sort">社員並び替え</button><button type="button" class="btn" data-e="sheet">シート入力</button><button type="button" class="btn" data-e="lt80">出勤率8割未満登録</button>
+      <span class="spacer"></span><button type="button" class="btn primary" data-e="register">登録</button>
+    </div>` });
+  w.dataset.kind = 'employeeInfo';
+  const refresh = () => { renderEmpList(w); renderEmpDetail(w); };
+  w.refresh = refresh;
+  refresh();
+  $('#empList', w).addEventListener('click', ev => { const r = ev.target.closest('[data-empsel]'); if (!r) return; empSel = +r.dataset.empsel; refresh(); });
+  $('#empList', w).addEventListener('dblclick', ev => { const r = ev.target.closest('[data-empsel]'); if (!r) return; empSel = +r.dataset.empsel; refresh(); openEmployeeForm(w, empById(empSel)); });
+  $('#empDetail', w).addEventListener('dblclick', () => { if (empSel != null && empById(empSel)) openEmployeeForm(w, empById(empSel)); });
+  $('#empAll', w).addEventListener('change', ev => { if (ev.target.checked) { empFilter = null; refresh(); } });
+  $$('[data-e]', w).forEach(b => b.addEventListener('click', async () => {
+    const k = b.dataset.e;
+    if (k === 'new') openEmployeeForm(w, null);
+    else if (k === 'edit') { if (empSel == null || !empById(empSel)) { await msgBox('社員が選択されていません。\n編集したい社員を選択し、再度「項目編集」を押してください。', '編集社員未選択', 'warn'); return; } openEmployeeForm(w, empById(empSel)); }
+    else if (k === 'delete') {
+      if (empSel == null || !empById(empSel)) { await msgBox('削除する社員を選択してください。', '削除社員未選択', 'warn'); return; }
+      if (!(await askYesNo('選択した社員の取得有給数も含めた\n全てのデータを削除してよろしいですか？', 'データ削除確認'))) { await msgBox('処理が中断されました。', '処理中断', 'warn'); return; }
+      state.employees = state.employees.filter(e => e.id !== empSel); empSel = null; save(); refresh(); render();
+    }
+    else if (k === 'sort') {
+      if (!state.employees.length) { await msgBox('社員が登録されていません。', '社員未登録', 'warn'); return; }
+      if (state.employees.length === 1) { await msgBox('社員が一人しか登録されていないため、並び替えできません。', '並び替え不可', 'warn'); return; }
+      openSort(w);
+    }
+    else if (k === 'search') { if (!state.employees.length) { await msgBox('社員が登録されていません。', '社員未登録', 'warn'); return; } openSearch(w); }
+    else if (k === 'sheet') { w.remove(); go('input'); }
+    else if (k === 'lt80') { if (!state.employees.length) { await msgBox('社員が登録されていません。', '社員未登録', 'warn'); return; } openLessThan80(w); }
+    else if (k === 'register') { save(); render(); await msgBox('登録が完了しました。', '登録完了'); if (await askYesNo('「社員情報」を閉じてよろしいですか？', '社員情報終了確認')) w.remove(); }
+  }));
+  w.close = () => { w.remove(); render(); };
+}
+function renderEmpList(w) {
+  const list = empFilter ? state.employees.filter(e => empFilter.includes(e.id)) : state.employees;
+  let h = `<table class="lst"><thead><tr><th class="mono">社員No</th><th>氏名</th><th class="num">有給残</th></tr></thead><tbody>`;
+  for (const e of list) {
+    const c = computeEmployee(e, S(), TBL(), state.target.y, state.target.m);
+    h += `<tr data-empsel="${e.id}" class="${e.id === empSel ? 'sel' : ''}"><td class="mono">${pad8(e.no)}</td><td>${esc(e.name)}</td><td class="num">${fmt1(c.left)}</td></tr>`;
+  }
+  if (!list.length) h += `<tr><td colspan="3" class="empty">社員が登録されていません</td></tr>`;
+  $('#empList', w).innerHTML = h + '</tbody></table>';
+  const selRow = $('#empList tr.sel', w); if (selRow) selRow.scrollIntoView({ block: 'nearest' });
+}
+function renderEmpDetail(w) {
+  const e = empSel != null ? empById(empSel) : null;
+  const items = [['社員No'], ['氏名'], ['比例区分'], ['入社日'], ['入社時付与日数'], ['在職年数'], ['本年取得日'], ['本年取得月'], ['本年付与日数'], ['繰越日数'], ['現在残'], ['出勤率8割未満'], ['義務期間開始'], ['義務期間終了'], ['取得義務日数'], ['対象期間取得日数']];
+  if (e) {
+    const c = computeEmployee(e, S(), TBL(), state.target.y, state.target.m);
+    const v = [pad8(e.no), e.name, e.propDiv > 0 ? String(e.propDiv) : '一般', fmtJ(c.hire), e.grantAtJoin ? `${e.grantAtJoin} 日` : '-', `${fmt1(c.serviceYears)} 年`, c.grantDate ? fmtJ(c.grantDate) : '-', c.grantMonth ? c.grantMonth + '月' : '-', String(c.grantDaysYear), fmt1(c.carryOver), fmt1(c.left), c.flaggedDates.length ? c.flaggedDates.map(fmtJ).join(', ') : '-', c.duty ? fmtJ(c.duty.start) : '-', c.duty ? fmtJ(c.duty.end) : '-', c.duty ? `${fmt1(c.duty.need)} 日` : '-', c.duty ? `${fmt1(c.duty.got)} 日` : '-'];
+    items.forEach((it, i) => it.push(v[i]));
+  }
+  $('#empDetail', w).innerHTML = `<table class="lst kv"><thead><tr><th>項目</th><th></th></tr></thead><tbody>${items.map(it => `<tr><td>${it[0]}</td><td>${esc(it[1] ?? '')}</td></tr>`).join('')}</tbody></table>`;
+}
+function openEmployeeForm(parent, emp) {
+  const isNew = !emp;
+  const e = emp || { no: '', name: '', propDiv: 0, joined: '', grantAtJoin: '', regDate: '', regLeft: '', regLastYearLeft: '' };
+  const w = openModal({ title: isNew ? '新規登録' : '項目編集', cls: 'w-md', body: `
+    <div class="form">
+      <div class="frow"><label>社員No</label><input type="text" id="efNo" inputmode="numeric" maxlength="8" value="${esc(e.no)}"></div>
+      <div class="frow"><label>氏名</label><input type="text" id="efName" value="${esc(e.name)}" maxlength="40"></div>
+      <div class="frow"><label>入社年月日</label><input type="date" id="efJoined" value="${esc(e.joined)}"></div>
+      <div class="frow"><label>比例区分</label><select id="efPd">${opts(['一般', 4, 3, 2, 1], e.propDiv > 0 ? e.propDiv : '一般')}</select></div>
+      <table class="pdref"><tr><th>週所定労働日数</th><th>1年間の所定労働日数</th><th>区分</th></tr><tr><td>1日</td><td>48日〜72日</td><td>1</td></tr><tr><td>2日</td><td>73日〜120日</td><td>2</td></tr><tr><td>3日</td><td>121日〜168日</td><td>3</td></tr><tr><td>4日</td><td>169日〜216日</td><td>4</td></tr></table>
+      <div class="frow"><label>入社時付与</label><input type="number" id="efGrant" min="0" max="40" step="1" value="${esc(e.grantAtJoin === 0 ? '' : e.grantAtJoin)}"><span>日</span></div>
+      <fieldset class="fset"><legend>有給日数登録</legend>
+        <div class="frow"><label>登録日付</label><input type="date" id="efRegDate" value="${esc(e.regDate)}"></div>
+        <div class="frow"><label>有給残日数</label><input type="number" id="efRegLeft" step="0.5" min="-40" max="40" value="${esc(e.regLeft)}"></div>
+        <div class="frow"><label>有給残のうち前年繰越日数</label><input type="number" id="efRegLY" step="0.5" min="0" max="20" value="${esc(e.regLastYearLeft)}"></div>
+      </fieldset>
+      <div class="btns right"><button type="button" class="btn primary" id="efSubmit">${isNew ? '登録' : '更新'}</button></div>
+    </div>` });
+  $('#efNo', w).addEventListener('input', ev => { ev.target.value = ev.target.value.replace(/\D/g, '').slice(0, 8); });
+  $('#efSubmit', w).addEventListener('click', async () => {
+    const no = $('#efNo', w).value.trim(), name = $('#efName', w).value.trim(), joined = $('#efJoined', w).value;
+    if (!no) { await msgBox('「社員No」は必須項目です。', '必須項目未入力', 'warn'); $('#efNo', w).focus(); return; }
+    if (!name) { await msgBox('「氏名」は必須項目です。', '必須項目未入力', 'warn'); $('#efName', w).focus(); return; }
+    if (!joined) { await msgBox('「入社年月日」は必須項目です。', '必須項目未入力', 'warn'); $('#efJoined', w).focus(); return; }
+    if (!/^\d{1,8}$/.test(no)) { await msgBox('「社員No」には8桁以内の数値を入力してください。', '数値入力', 'warn'); return; }
+    if (/^\d+$/.test(name)) { await msgBox('「氏名」には文字列を入力してください。', '文字列入力', 'warn'); return; }
+    const jd = parseISO(joined);
+    if (!jd || jd < mkDate(1910, 1, 1) || jd > mkDate(9999, 6, 1)) { await msgBox('入社年月日に有効な日付を登録してください。', '無効な日付', 'warn'); return; }
+    const dup = state.employees.find(x => x !== emp && pad8(x.no) === pad8(no));
+    if (dup) { await msgBox('登録済みの社員Noです。\n別の社員Noに変更してください。', '社員No重複', 'warn'); return; }
+    const regDate = $('#efRegDate', w).value, regLeft = $('#efRegLeft', w).value.trim(), regLY0 = $('#efRegLY', w).value.trim();
+    let regLY = regLY0;
+    if ((regLeft !== '' || regLY !== '') && !regDate) { await msgBox('登録日付を登録してください。', '登録日付なし', 'warn'); return; }
+    if (regDate && regLeft === '') { await msgBox('有給残を登録してください。', '有給残登録なし', 'warn'); return; }
+    if (regLeft !== '') {
+      if (isNaN(+regLeft)) { await msgBox('有給残を登録してください。', '有給残登録なし', 'warn'); return; }
+      if (+regLeft > 40) { await msgBox('有給残は最大40です。', '有給残最大40', 'warn'); return; }
+      if (regLY === '') regLY = '0';
+      if (isNaN(+regLY)) { await msgBox('繰越日数は数値で入力してください。', '数値入力', 'warn'); return; }
+      if (+regLY > 20) { await msgBox('繰越日数は最大20です。', '繰越日数最大20', 'warn'); return; }
+      if (+regLY > +regLeft) { await msgBox('現在残以下の数字を入力してください。', '現在残以下入力', 'warn'); return; }
+    }
+    const rd = regDate ? parseISO(regDate) : null;
+    if (regDate && (!rd || rd < mkDate(1910, 1, 1) || rd > mkDate(9999, 6, 1))) { await msgBox('有給日数登録に有効な日付を登録してください。', '無効な日付', 'warn'); return; }
+    const pd = $('#efPd', w).value; const grant = $('#efGrant', w).value.trim();
+    const vals = { no: String(+no), name, propDiv: pd === '一般' ? 0 : +pd, joined: iso(jd), grantAtJoin: grant === '' ? 0 : Math.max(0, Math.floor(+grant)), regDate: regDate || '', regLeft: regLeft === '' ? '' : +regLeft, regLastYearLeft: regLeft === '' ? '' : +regLY };
+    if (isNew) { const ne = Object.assign({ id: nextId(), division: '', section: '', lessThan80: {}, usage: {} }, vals); state.employees.push(ne); empSel = ne.id; }
+    else Object.assign(emp, vals);
+    save(); parent.refresh(); render();
+    if (isNew) {
+      if (await askYesNo('続けて社員登録を行いますか？', '社員登録継続確認')) { ['#efNo', '#efName', '#efJoined', '#efGrant', '#efRegDate', '#efRegLeft', '#efRegLY'].forEach(id => { $(id, w).value = ''; }); $('#efPd', w).value = '一般'; $('#efNo', w).focus(); return; }
+    }
+    w.remove();
+  });
+}
+function openSort(parent) {
+  const keys = ['社員NO', '比例区分', '入社日', '本年取得月', '取得義務日数', '義務期間開始', '義務期間終了'];
+  const w = openModal({ title: '社員並び替え', cls: 'w-sm', body: `<div class="form"><div class="frow"><label>項目</label><select id="sortKey"><option value=""></option>${opts(keys, '')}</select></div>
+    <div class="frow radios"><label><input type="radio" name="sortDir" value="asc" checked>昇順</label><label><input type="radio" name="sortDir" value="desc">降順</label></div>
+    <div class="btns right"><button type="button" class="btn primary" id="sortExe">並び替え</button></div></div>` });
+  $('#sortExe', w).addEventListener('click', async () => {
+    const key = $('#sortKey', w).value; if (!key) { await msgBox('並び替えのキーとなる項目を選んでください。', '並び替えキー選択', 'warn'); return; }
+    const asc = $('input[name=sortDir]:checked', w).value === 'asc';
+    const rows = computeAll();
+    const val = (r) => {
+      switch (key) {
+        case '社員NO': return +r.emp.no || 0;
+        case '比例区分': return r.propDiv > 0 ? r.propDiv : 5;
+        case '入社日': return r.hire ? r.hire.getTime() : 0;
+        case '本年取得月': return r.grantMonth || '-';
+        case '取得義務日数': return r.duty ? (r.duty.remain <= 0 ? 'OK' : r.duty.remain) : '-';
+        case '義務期間開始': return r.duty ? r.duty.start.getTime() : '-';
+        case '義務期間終了': return r.duty ? r.duty.end.getTime() : '-';
+      }
+    };
+    const cmp = (a, b) => { // Excel 流：数値→文字列
+      const na = typeof a === 'number', nb = typeof b === 'number';
+      if (na && nb) return a - b; if (na) return -1; if (nb) return 1; return String(a).localeCompare(String(b), 'ja');
+    };
+    rows.sort((a, b) => { const c = cmp(val(a), val(b)); return asc ? c : -c; });
+    state.employees = rows.map(r => r.emp); save(); parent.refresh(); render(); w.remove();
+  });
+}
+function openSearch(parent) {
+  const w = openModal({ title: '社員検索', cls: 'w-sm', body: `<div class="form"><div class="frow"><label>氏名の一部</label><input type="text" id="srchName"></div><div class="btns right"><button type="button" class="btn primary" id="srchExe">検索</button></div></div>` });
+  const exe = async () => {
+    const q = $('#srchName', w).value.trim(); if (!q) { await msgBox('検索文字列を入力してください。', '検索文字列入力', 'warn'); return; }
+    const hit = state.employees.filter(e => (e.name || '').includes(q)).map(e => e.id);
+    if (!hit.length) { await msgBox('該当社員が見つかりませんでした。', '検索結果なし'); w.remove(); return; }
+    empFilter = hit; empSel = null; $('#empAll', parent).checked = false; parent.refresh(); w.remove();
+  };
+  $('#srchExe', w).addEventListener('click', exe);
+  $('#srchName', w).addEventListener('keydown', ev => { if (ev.key === 'Enter') exe(); });
+}
+function openLessThan80(parent) {
+  let sel = empSel != null && empById(empSel) ? empSel : (state.employees[0] && state.employees[0].id);
+  const w = openModal({ title: '出勤率8割未満登録', cls: 'w-lg', body: `<div class="emp-layout"><div class="emp-left"><div class="listbox" id="ltList"></div></div><div class="emp-right"><div class="listbox" id="ltDates"></div></div></div>` });
+  const draw = () => {
+    $('#ltList', w).innerHTML = `<table class="lst"><thead><tr><th class="mono">社員No</th><th>氏名</th></tr></thead><tbody>${state.employees.map(e => `<tr data-lt="${e.id}" class="${e.id === sel ? 'sel' : ''}"><td class="mono">${pad8(e.no)}</td><td>${esc(e.name)}</td></tr>`).join('')}</tbody></table>`;
+    const e = empById(sel);
+    let h = `<table class="lst"><thead><tr><th>付与日</th><th class="num">出勤率8割未満</th></tr></thead><tbody>`;
+    if (e) {
+      const evs = grantEvents(e, S(), TBL(), mkDate(state.target.y + 1, 12, 31));
+      for (const ev of evs) { const k = iso(ev.date); const on = e.lessThan80 && e.lessThan80[k]; h += `<tr data-ltd="${k}" class="${on ? 'flag' : ''}"><td>${fmtJ(ev.date)}</td><td class="num">${on ? '〇' : ''}</td></tr>`; }
+    }
+    $('#ltDates', w).innerHTML = h + '</tbody></table>';
+    const selRow = $('#ltList tr.sel', w); if (selRow) selRow.scrollIntoView({ block: 'nearest' });
+  };
+  draw();
+  $('#ltList', w).addEventListener('click', ev => { const r = ev.target.closest('[data-lt]'); if (!r) return; sel = +r.dataset.lt; draw(); });
+  $('#ltDates', w).addEventListener('click', ev => {
+    const r = ev.target.closest('[data-ltd]'); if (!r) return; const e = empById(sel); if (!e) return;
+    e.lessThan80 = e.lessThan80 || {}; const k = r.dataset.ltd;
+    if (e.lessThan80[k]) delete e.lessThan80[k]; else e.lessThan80[k] = 1;
+    save(); draw(); parent.refresh();
+  });
+  w.close = () => { w.remove(); render(); };
+}
+
+// ---------- 入力シート（一括登録） ----------
+let inputRows = [];
+function emptyInputRow() { return { no: '', name: '', pd: '', joined: '', grant: '', regDate: '', regLeft: '', regLY: '' }; }
+function renderInputSheet() {
+  if (!inputRows.length) for (let i = 0; i < 10; i++) inputRows.push(emptyInputRow());
+  const cols = [['no', '※社員No', 'text'], ['name', '※氏名', 'text'], ['pd', '比例区分', 'pd'], ['joined', '※入社年月日', 'date'], ['grant', '入社時付与日数', 'number'], ['regDate', '有給残\n登録日付', 'date'], ['regLeft', '登録日付有給残', 'number'], ['regLY', '有給残の内\n前年繰越日数', 'number']];
+  let h = `<header class="topbar no-print"><div class="brand">新規データ一括登録</div><div class="topbtns"><button type="button" class="btn primary" data-act="inputRegister">登録</button><button type="button" class="btn" data-act="inputBack">戻る</button></div></header>
+  <div class="sheetnote">※必須項目</div>
+  <div class="tablewrap"><table class="grid input" id="inputsheet"><thead><tr><th class="rown"></th>${cols.map(c => `<th>${esc(c[1]).replace(/\n/g, '<br>')}</th>`).join('')}</tr></thead><tbody>`;
+  inputRows.forEach((r, i) => {
+    h += `<tr><td class="rown">${i + 1}</td>` + cols.map(([k, , t]) => {
+      if (t === 'pd') return `<td><select data-r="${i}" data-k="${k}">${opts(['', 1, 2, 3, 4], r[k])}</select></td>`;
+      return `<td><input type="${t}" data-r="${i}" data-k="${k}" value="${esc(r[k])}" ${t === 'number' ? 'step="0.5" min="0" max="40"' : ''} ${k === 'no' ? 'maxlength="8" inputmode="numeric"' : ''}></td>`;
+    }).join('') + '</tr>';
+  });
+  h += `</tbody></table></div><div class="btns"><button type="button" class="btn" data-act="inputAddRow">行を追加</button></div>`;
+  return h;
+}
+function bindInputSheet(tbl) {
+  tbl.addEventListener('input', ev => { const t = ev.target; if (t.dataset.r == null) return; inputRows[+t.dataset.r][t.dataset.k] = t.value; });
+  tbl.addEventListener('change', ev => { const t = ev.target; if (t.dataset.r == null) return; inputRows[+t.dataset.r][t.dataset.k] = t.value; });
+}
+async function backFromInputSheet() {
+  const has = inputRows.some(r => Object.values(r).some(v => String(v).trim() !== ''));
+  if (has) { if (!(await askYesNo('未登録情報がシートに入力されています。\n破棄してもよろしいですか？', '未登録情報確認', true))) return; }
+  inputRows = []; go('main');
+}
+async function registerBySheet() {
+  const rows = inputRows.map((r, i) => ({ r, i })).filter(x => Object.values(x.r).some(v => String(v).trim() !== ''));
+  if (!rows.length) { await msgBox('登録データがありません。\n処理を中断します。', '処理中断', 'warn'); return; }
+  const focusCell = (i, k) => { const el = $(`#inputsheet [data-r="${i}"][data-k="${k}"]`); if (el) { el.classList.add('err'); el.focus(); } };
+  $$('#inputsheet .err').forEach(x => x.classList.remove('err'));
+  for (const { r, i } of rows) {
+    if (!String(r.no).trim()) { await msgBox('必須項目に漏れがあります。\nデータを確認してください。', '必須項目漏れ', 'warn'); focusCell(i, 'no'); return; }
+    if (!/^\d{1,8}$/.test(String(r.no).trim())) { await msgBox('「社員No」は数値で入力してください。', '数値入力', 'warn'); focusCell(i, 'no'); return; }
+    if (!String(r.name).trim()) { await msgBox('必須項目に漏れがあります。\nデータを確認してください。', '必須項目漏れ', 'warn'); focusCell(i, 'name'); return; }
+    if (/^\d+$/.test(String(r.name).trim())) { await msgBox('「氏名」は文字列で入力してください。', '文字列入力', 'warn'); focusCell(i, 'name'); return; }
+    const jd = parseISO(r.joined);
+    if (!r.joined || !jd || jd < mkDate(1910, 1, 1) || jd > mkDate(9999, 6, 1)) { await msgBox('「入社年月日」は日付形式（yyyy/mm/dd）で入力してください。', '日付入力', 'warn'); focusCell(i, 'joined'); return; }
+    if ((String(r.regLeft).trim() !== '' || String(r.regLY).trim() !== '') && !r.regDate) { await msgBox('有給残登録日付（yyyy/mm/dd）を入力してください。', '登録日付有給残入力', 'warn'); focusCell(i, 'regDate'); return; }
+    if (r.regDate) {
+      const rd = parseISO(r.regDate);
+      if (!rd || rd < mkDate(1910, 1, 1) || rd > mkDate(9999, 6, 1)) { await msgBox('「有給残登録日付」は日付形式（yyyy/mm/dd）で入力してください。', '登録日付有給残入力', 'warn'); focusCell(i, 'regDate'); return; }
+      if (String(r.regLeft).trim() === '') { await msgBox('有給残を入力してください。', '有給残登録日付入力', 'warn'); focusCell(i, 'regLeft'); return; }
+    }
+    if (String(r.regLY).trim() !== '' && (String(r.regLeft).trim() === '' || +r.regLY > +r.regLeft)) { await msgBox('前年繰越日数は現在残以下の数字を入力してください。', '現在残以下入力', 'warn'); focusCell(i, 'regLeft'); return; }
+  }
+  // 社員No 重複チェック
+  const existing = new Set(state.employees.map(e => pad8(e.no)));
+  let dupExisting = rows.find(x => existing.has(pad8(x.r.no)));
+  if (dupExisting) {
+    if (await askYesNo('登録済みの「社員No」と重複しています。\n自動で重複しない連番を振り直しますか？', '社員No重複')) {
+      let n = state.employees.reduce((a, e) => Math.max(a, +e.no || 0), 0) + 1;
+      for (const x of rows) { x.r.no = String(n++); }
+    } else { await msgBox('登録を中断します。', '登録中断', 'warn'); return; }
+  }
+  const seen = new Set();
+  for (const x of rows) { const k = pad8(x.r.no); if (seen.has(k)) { await msgBox('登録するレコード内に「社員No」の重複があります。\n修正してください。', '社員No重複', 'warn'); focusCell(x.i, 'no'); return; } seen.add(k); }
+  let id = nextId();
+  for (const { r } of rows) {
+    const hasReg = String(r.regLeft).trim() !== '';
+    state.employees.push({ id: id++, no: String(+r.no), name: String(r.name).trim(), division: '', section: '', propDiv: r.pd ? +r.pd : 0, joined: iso(parseISO(r.joined)), grantAtJoin: r.grant === '' ? 0 : Math.max(0, Math.floor(+r.grant) || 0), regDate: r.regDate || '', regLeft: hasReg ? +r.regLeft : '', regLastYearLeft: hasReg ? (String(r.regLY).trim() === '' ? 0 : +r.regLY) : '', lessThan80: {}, usage: {} });
+  }
+  save(); inputRows = []; go('main');
+  await msgBox(`${rows.length}人を登録しました。`, '登録完了');
+}
+
+// ---------- 分析レポート ----------
+function buildReport({ firstDate, endDate, exclude = false, dutyStart = null, dutyMonths = 0 }) {
+  const s = S(), tbl = TBL();
+  const ty = dutyStart ? state.target.y : Y(firstDate), tm = dutyStart ? state.target.m : M(firstDate);
+  let list = state.employees.slice();
+  let caption;
+  if (dutyStart) {
+    const dEnd = eomonth(addMonths(dutyStart, dutyMonths - 1), 0);
+    list = list.filter(e => { const c = computeEmployee(e, s, tbl, ty, tm); return c.duty && dutyStart <= c.duty.end && c.duty.end <= dEnd; });
+    caption = `※義務期間終了月が${Y(dutyStart)}年${M(dutyStart)}月～${Y(dEnd)}年${M(dEnd)}月の社員の内、有給取得率が低い10人を表示`;
+  } else if (exclude) { list = list.filter(e => !(e.propDiv === 1 || e.propDiv === 2)); caption = '※比例区分1、2を除く全社員の内、有給取得率が低い10人を表示'; }
+  else caption = '※全社員の内、有給取得率が低い10人を表示';
+  if (!list.length) return null;
+  const rows = list.map(e => reportRow(e, s, tbl, firstDate, endDate, ty, tm));
+  rows.sort((a, b) => { const ra = a.rate == null ? Infinity : a.rate, rb = b.rate == null ? Infinity : b.rate; return (ra - rb) || (b.grant - a.grant); });
+  const n = rows.length;
+  const lastN = Math.max(1, rows.filter(r => r.hire <= addDays(firstDate, -1)).length);
+  const sumUsed = rows.reduce((a, r) => a + r.used, 0), sumLast = rows.reduce((a, r) => a + r.lastUsed, 0);
+  const analysis = {
+    avgEmp: [sumLast / lastN, sumUsed / n], avgMonth: [sumLast / 12, sumUsed / 12],
+    lessFive: [rows.filter(r => r.hire <= addDays(firstDate, -1) && r.lastUsed < 5).length, rows.filter(r => r.used < 5).length],
+  };
+  // グラフ基：24ヶ月
+  const months = []; for (let i = 23; i >= 0; i--) months.push(eomonth(endDate, -i));
+  const perEmp = rows.map(r => ({ name: r.name, vals: months.map(me => sumUsage(r.emp.usage, addDays(eomonth(me, -1), 1), me)) }));
+  perEmp.forEach(p => p.total = p.vals.reduce((a, b) => a + b, 0));
+  const totals = months.map((_, i) => perEmp.reduce((a, p) => a + p.vals[i], 0));
+  const sorted = perEmp.slice().sort((a, b) => b.total - a.total);
+  const k = Math.min(10, sorted.length);
+  state.report = {
+    term: `対象期間：${Y(addMonths(endDate, -11))}年${String(M(addMonths(endDate, -11))).padStart(2, '0')}月～${Y(endDate)}年${String(M(endDate)).padStart(2, '0')}月`,
+    company: s.company, caption, analysis,
+    rows: rows.map(r => ({ name: r.name, hire: iso(r.hire), serviceYears: r.serviceYears, grant: r.grant, used: r.used, rate: r.rate, lastUsed: r.lastUsed })),
+    graph: { months: months.map(iso), totals, top: sorted.slice(0, k).map(p => ({ name: p.name, total: p.total })), bottom: sorted.slice(sorted.length - k).map(p => ({ name: p.name, total: p.total })) },
+    createdAt: new Date().toISOString(),
+  };
+  return state.report;
+}
+function openReportTerm() {
+  if (!state.employees.length) { msgBox('社員が登録されていません。', '社員未登録', 'warn'); return; }
+  const ty = state.target.y, tm = state.target.m;
+  const w = openModal({ title: 'レポート作成', cls: 'w-md', body: `
+    <fieldset class="fset"><legend>対象期間で出力対象を選択</legend>
+      <div class="frow"><select id="rpYear">${opts(yearList(), ty)}</select><span>年</span><select id="rpMonth">${opts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 4)}</select><span>月</span><span class="note">開始月から1年間</span></div>
+      <div class="frow"><label class="chk"><input type="checkbox" id="rpExclude">比例区分1と2の社員は除いて出力する</label></div>
+      <div class="btns right"><button type="button" class="btn primary" id="rpExe1">出力</button></div>
+    </fieldset>
+    <fieldset class="fset"><legend>義務期間終了月で出力対象を選択</legend>
+      <div class="frow"><span>義務期間終了月が</span><select id="rpFilter">${opts(['-', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], '-')}</select><span>ヶ月以内の社員</span></div>
+      <div class="frow"><span class="note" id="rpDutyTerm"></span></div>
+      <div class="btns right"><button type="button" class="btn primary" id="rpExe2">出力</button></div>
+    </fieldset>` });
+  const upd = () => { const v = $('#rpFilter', w).value; const el = $('#rpDutyTerm', w); if (v === '-') { el.textContent = ''; return; } const st = mkDate(ty, tm, 1), en = addMonths(st, +v - 1); el.textContent = `（対象義務期間終了月：${Y(st)}年${M(st)}月～${Y(en)}年${M(en)}月）`; };
+  $('#rpFilter', w).addEventListener('change', upd); upd();
+  $('#rpExe1', w).addEventListener('click', async () => {
+    const first = mkDate(+$('#rpYear', w).value, +$('#rpMonth', w).value, 1); const end = addDays(addMonths(first, 12), -1);
+    const r = buildReport({ firstDate: first, endDate: end, exclude: $('#rpExclude', w).checked });
+    if (!r) { await msgBox('対象社員がいないためレポートを出力できません。\n処理を中断します。', '処理中断', 'warn'); return; }
+    save(); w.remove(); render(); await msgBox('レポート作成が完了しました。', '作成完了');
+  });
+  $('#rpExe2', w).addEventListener('click', async () => {
+    const v = $('#rpFilter', w).value; if (v === '-') { await msgBox('対象となる義務期間を指定してください。', '義務期間未選択', 'warn'); return; }
+    const dutyStart = mkDate(ty, tm, 1); const end = eomonth(addMonths(dutyStart, +v - 1), 0); const first = addMonths(end, -11);
+    const r = buildReport({ firstDate: mkDate(Y(first), M(first), 1), endDate: end, dutyStart, dutyMonths: +v });
+    if (!r) { await msgBox('出力できるデータがありません。\n処理を中断します。', '処理中断', 'warn'); return; }
+    save(); w.remove(); render(); await msgBox('レポート作成が完了しました。', '作成完了');
+  });
+}
+function renderReport() {
+  const r = state.report;
+  let h = `<header class="topbar no-print"><div class="brand">レポート</div><div class="topbtns"><button type="button" class="btn" data-act="makeReport">レポート作成</button><button type="button" class="btn" data-act="pdfReport">PDF出力</button><button type="button" class="btn" data-act="top">戻る</button></div></header><div class="report print-area">`;
+  h += `<div class="rp-head"><div class="rp-term">${r ? esc(r.term) : ''}</div><h2>有給取得状況</h2><p class="rp-note">働き方改革法案の成立により、労働基準法が改正され、年10日以上有給休暇の権利がある社員について<br>最低でも5日以上は有給休暇を与えることが義務付けられました。</p><div class="rp-company">${r ? esc(r.company) : ''}</div></div>`;
+  h += `<table class="rpt"><thead><tr><th>氏名</th><th>入社年月日</th><th>在職年数</th><th>本年分<br>付与日数</th><th>使用<br>有給日数</th><th>取得率</th><th>前年<br>使用日数</th></tr></thead><tbody>`;
+  if (r) {
+    r.rows.slice(0, 10).forEach(x => {
+      const cls = x.used === 0 ? 'red' : (x.used < 5 ? 'yellow' : '');
+      h += `<tr><td>${esc(x.name)}</td><td class="num">${fmtWareki(parseISO(x.hire))}</td><td class="num">${fmt2(x.serviceYears)}</td><td class="num">${fmt2(x.grant)}</td><td class="num ${cls}">${fmt2(x.used)}</td><td class="num">${x.rate == null ? '-' : Math.round(x.rate * 100) + '%'}</td><td class="num">${fmt2(x.lastUsed)}</td></tr>`;
+    });
+    h += `</tbody></table><div class="rp-caption">${esc(r.caption)}</div>`;
+    const a = r.analysis;
+    h += `<h3 class="rp-title">有給分析レポート（${esc(r.company)}）</h3>
+    <table class="rp-analysis"><tr><td>平均有給利用日数（社員単位）</td><th>前年</th><td class="num">${fmt2(a.avgEmp[0])}</td><th>今年</th><td class="num">${fmt2(a.avgEmp[1])}</td></tr>
+    <tr><td>平均有給利用日数（月別）</td><th>前年</th><td class="num">${fmt2(a.avgMonth[0])}</td><th>今年</th><td class="num">${fmt2(a.avgMonth[1])}</td></tr>
+    <tr><td>有給消化5日未満の人数</td><th>前年</th><td class="num">${a.lessFive[0]}</td><th>今年</th><td class="num">${a.lessFive[1]}</td></tr></table>`;
+    h += `<div class="chart-line">${lineChart(r.graph.months, r.graph.totals, '各月の有給利用状況')}</div>
+    <div class="chart-bars"><div>${barChart(r.graph.top, '2年間の有給利用日数上位10人', 'top')}</div><div>${barChart(r.graph.bottom.slice().reverse(), '2年間の有給利用日数下位10人', 'bottom')}</div></div>`;
+  } else {
+    h += `<tr><td colspan="7" class="empty">「レポート作成」で対象期間を指定してください</td></tr></tbody></table>`;
+  }
+  return h + `</div>`;
+}
+// ---------- グラフ（SVG） ----------
+function niceStep(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); const f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+function niceMax(v) { if (v <= 0) return 1; const st = niceStep(v / 4); return Math.ceil(v / st - 1e-9) * st; }
+function lineChart(months, vals, title) {
+  const W = 760, H = 220, L = 40, R = 16, T = 30, B = 40;
+  const max = niceMax(Math.max(1, ...vals)); const step = niceStep(max / 4);
+  const n = vals.length; const x = i => L + (W - L - R) * (n === 1 ? 0.5 : i / (n - 1)); const y = v => T + (H - T - B) * (1 - v / max);
+  let g = '';
+  for (let v = 0; v <= max + 1e-9; v += step) { g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${v % 1 ? v.toFixed(1) : v}</text>`; }
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const area = `${x(0).toFixed(1)},${y(0)} ` + pts + ` ${x(n - 1).toFixed(1)},${y(0)}`;
+  let labels = ''; months.forEach((m, i) => { if (i % 2 === 0) labels += `<text x="${x(i)}" y="${H - B + 16}" class="tick" text-anchor="middle">${m.slice(0, 4)}/${+m.slice(5, 7)}</text>`; });
+  const dots = vals.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="4" class="dot"><title>${months[i].slice(0, 4)}/${+months[i].slice(5, 7)}：${v}日</title></circle>`).join('');
+  const last = vals[n - 1];
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${esc(title)}"><text x="${W / 2}" y="16" class="ctitle" text-anchor="middle">${esc(title)}</text>${g}<polygon points="${area}" class="area"/><polyline points="${pts}" class="line"/>${dots}<text x="${x(n - 1) - 8}" y="${y(last) - 8}" class="tick" text-anchor="end">${last}</text>${labels}</svg>`;
+}
+function barChart(items, title, kind) {
+  const W = 360, rowH = 22, L = 88, R = 36, T = 28, B = 8;
+  const H = T + B + Math.max(1, items.length) * rowH;
+  const max = niceMax(Math.max(1, ...items.map(i => i.total)));
+  const x = v => L + (W - L - R) * v / max;
+  let b = '';
+  items.forEach((it, i) => {
+    const yy = T + i * rowH + 3; const w = Math.max(0, x(it.total) - L);
+    b += `<text x="${L - 6}" y="${yy + 12}" class="tick" text-anchor="end">${esc(it.name)}</text><rect x="${L}" y="${yy}" width="${w.toFixed(1)}" height="16" rx="0" class="bar ${kind}"><title>${esc(it.name)}：${it.total}日</title></rect><text x="${x(it.total) + 4}" y="${yy + 12}" class="tick">${it.total}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${esc(title)}"><text x="${W / 2}" y="16" class="ctitle" text-anchor="middle">${esc(title)}</text><line x1="${L}" x2="${L}" y1="${T}" y2="${H - B}" class="axis"/>${b}</svg>`;
+}
+
+// ---------- 個人別管理簿 ----------
+let ledgerPage = 1;
+function buildLedger(y, m, ids) {
+  const s = S(), tbl = TBL();
+  const head = mkDate(y, m, 1), end = eomonth(addMonths(head, 11), 0);
+  const blocks = [];
+  ids.forEach((id, idx) => {
+    const e = empById(id); if (!e) return;
+    const hire = parseISO(e.joined);
+    const cEnd = computeEmployee(e, s, tbl, Y(end), M(end));
+    const evs = cEnd.events.filter(ev => ev.date >= head && ev.date <= end);
+    const ev1 = evs[0] || null, ev2 = evs[1] || null;
+    const flag = ev => ev && e.lessThan80 && e.lessThan80[iso(ev.date)];
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const ms = addMonths(head, i); const c = computeEmployee(e, s, tbl, Y(ms), M(ms));
+      const days = []; for (let d = 1; d <= 31; d++) { const dim = daysInMonth(Y(ms), M(ms)); days.push(d <= dim ? (e.usage[iso(mkDate(Y(ms), M(ms), d))] ?? '') : null); }
+      months.push({ y: Y(ms), m: M(ms), got: c.months[M(ms) - 1], left: c.left, days });
+    }
+    let lastYearLeft = cEnd.lastYearLeft;
+    if (ev2) { const i2 = months.findIndex(mm => mm.y === Y(ev2.date) && mm.m === M(ev2.date)); if (i2 > 0) lastYearLeft = months[i2 - 1].left; }
+    const sy = hire ? monthDiff(hire, end) / 12 : -1;
+    blocks.push({
+      idx: idx + 1, no: pad8(e.no), name: e.name, joined: fmtJ(hire), serviceYears: sy < 0 ? '-' : fmt1(roundUp1(sy)),
+      grantDate: ev1 ? fmtJ(ev1.date) : '-', grantDays: ev1 ? (flag(ev1) ? '0' : String(ev1.days || '-')) : '-',
+      grantDate2: ev2 ? fmtJ(ev2.date) : '-', grantDays2: ev2 ? (flag(ev2) ? '0' : String(ev2.days || '-')) : '-',
+      lastYearLeft: fmt1(lastYearLeft), nextCarry: fmt1(cEnd.carryOver), months,
+    });
+  });
+  const pages = []; for (let i = 0; i < blocks.length; i += 20) pages.push(blocks.slice(i, i + 20));
+  state.ledger = { term: `対象年度：${y}　(${y}年${m}月1日～${Y(end)}年${M(end)}月${D(end)}日)`, headMonth: m, pages, createdAt: new Date().toISOString() };
+  ledgerPage = 1;
+  return state.ledger;
+}
+function renderLedger() {
+  const L = state.ledger; const pages = L ? L.pages : [];
+  const pageOpts = pages.map((_, i) => i + 1);
+  let h = `<header class="topbar no-print"><div class="brand">個人別管理簿</div><div class="topbtns"><button type="button" class="btn" data-act="makeLedger">有給管理簿出力</button><span class="pager">ページ <select id="pageSel">${opts(pageOpts.length ? pageOpts : [1], ledgerPage)}</select> <button type="button" class="btn sm" data-act="pagePrev">←</button><button type="button" class="btn sm" data-act="pageNext">→</button> <span class="note">全 ${pages.length || 0}ページ</span></span><button type="button" class="btn" data-act="top">戻る</button></div></header><div class="ledger print-area">`;
+  if (!pages.length) h += `<div class="empty pad">「有給管理簿出力」で期首月と社員を指定してください</div>`;
+  pages.forEach((blocks, i) => { h += `<div class="lpage${i + 1 === ledgerPage ? '' : ' offpage'}">` + blocks.map(b => renderLedgerBlock(b, L.term)).join('') + '</div>'; });
+  return h + '</div>';
+}
+function renderLedgerBlock(b, term) {
+  let h = `<section class="lblock"><h2>個人別有給休暇管理簿</h2><div class="lterm">${esc(term)}</div>
+  <table class="lhead"><thead><tr><th>社員No</th><th>氏名</th><th>入社日</th><th>在職年数</th><th>有給付与日</th><th>付与日数</th><th>有給付与日2</th><th>付与日数2</th><th>昨年残</th><th>翌年繰越日数</th></tr></thead>
+  <tbody><tr><td class="mono">${esc(b.no)}</td><td>${esc(b.name)}</td><td>${esc(b.joined)}</td><td>${esc(b.serviceYears)}</td><td>${esc(b.grantDate)}</td><td>${esc(b.grantDays)}</td><td>${esc(b.grantDate2)}</td><td>${esc(b.grantDays2)}</td><td>${esc(b.lastYearLeft)}</td><td>${esc(b.nextCarry)}</td></tr></tbody></table>
+  <table class="lgrid"><thead><tr><th class="lm">${b.idx}</th><th>取得</th><th>残日数</th>`;
+  for (let d = 1; d <= 31; d++) h += `<th>${d}日</th>`;
+  h += `</tr></thead><tbody>`;
+  for (const mo of b.months) {
+    h += `<tr><th class="lm">${mo.m}月</th><td class="num">${fmt1(mo.got)}</td><td class="num shade">${fmt1(mo.left)}</td>`;
+    for (let d = 0; d < 31; d++) { const v = mo.days[d]; h += `<td class="num ${v === null ? 'na' : ''}">${v === null ? '' : (v === '' ? '' : v)}</td>`; }
+    h += `</tr>`;
+  }
+  return h + `</tbody></table></section>`;
+}
+function openLedgerCondition() {
+  if (!state.employees.length) { msgBox('社員が登録されていません。', '社員未登録', 'warn'); return; }
+  const w = openModal({ title: '有給管理簿出力', cls: 'w-lg', body: `
+    <div class="frow"><span class="lbl">期首月選択</span><select id="plYear">${opts(yearList(), state.target.y)}</select><span>年</span><select id="plMonth">${opts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 4)}</select><span>月</span><span class="note">期首月から1年間</span></div>
+    <div class="listbox tall" id="plList"><table class="lst"><thead><tr><th></th><th class="mono">社員No</th><th>氏名</th></tr></thead><tbody>${state.employees.map(e => `<tr data-pl="${e.id}"><td><input type="checkbox" data-plc="${e.id}"></td><td class="mono">${pad8(e.no)}</td><td>${esc(e.name)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="frow"><label class="chk"><input type="checkbox" id="plAll">全選択</label><span class="note" id="plCount">現在選択人数　0人</span></div>
+    <div class="btns wrap"><button type="button" class="btn primary" data-pl="all">全体pdf出力</button><button type="button" class="btn primary" data-pl="people">個人別pdf出力</button><button type="button" class="btn primary" data-pl="sheet">シート出力</button></div>` });
+  const count = () => { $('#plCount', w).textContent = `現在選択人数　${$$('[data-plc]:checked', w).length}人`; };
+  $('#plList', w).addEventListener('click', ev => { const r = ev.target.closest('[data-pl]'); if (!r || ev.target.matches('input')) { count(); return; } const cb = $('[data-plc]', r); cb.checked = !cb.checked; count(); });
+  $('#plAll', w).addEventListener('change', ev => { $$('[data-plc]', w).forEach(c => c.checked = ev.target.checked); count(); });
+  $$('[data-pl]', w).filter(b => b.tagName === 'BUTTON').forEach(b => b.addEventListener('click', async () => {
+    const kind = b.dataset.pl;
+    if (kind === 'all') { $$('[data-plc]', w).forEach(c => c.checked = true); }
+    const ids = $$('[data-plc]:checked', w).map(c => +c.dataset.plc);
+    if (ids.length > 500) { await msgBox('500人を超えて出力することはできません。', '出力不可', 'warn'); return; }
+    if (!ids.length) { await msgBox('社員が選択されていません。', '社員未選択', 'warn'); return; }
+    const q = kind === 'all' ? '全社員の有給管理簿をpdf出力します。\nよろしいですか？' : kind === 'people' ? '選択した社員の有給管理簿を個人別でpdf出力します。\nよろしいですか？' : '選択した社員の有給管理簿をシート出力します。\nよろしいですか？';
+    if (!(await askYesNo(q, kind === 'sheet' ? 'シート出力確認' : 'pdf出力確認'))) { await msgBox('キャンセルされました。', 'キャンセル', 'warn'); return; }
+    buildLedger(+$('#plYear', w).value, +$('#plMonth', w).value, ids); save(); w.remove(); go('ledger');
+    if (kind === 'sheet') { await msgBox('シート出力が完了しました。', '出力完了'); }
+    else { setTimeout(() => window.print(), 300); }
+  }));
+}
+
+
+// ---------- CSV 取込・出力 ----------
+function csvEscape(v) { const s = String(v ?? ''); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function toCSV(rows) { return '﻿' + rows.map(r => r.map(csvEscape).join(',')).join('\r\n') + '\r\n'; }
+function parseCSV(text) {
+  const rows = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\r') { /* skip */ }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(v => String(v).trim() !== ''));
+}
+function decodeCSV(buf) {
+  const u8 = new Uint8Array(buf);
+  if (u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder('utf-8').decode(u8.subarray(3));
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(u8); } catch (e) { }
+  try { return new TextDecoder('shift_jis').decode(u8); } catch (e) { return new TextDecoder('utf-8').decode(u8); }
+}
+function downloadText(name, text, type) {
+  const blob = new Blob([text], { type: type || 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function csvDate(s) { const d = parseISO(s); return d ? fmtJ(d) : ''; }
+function parseAnyDate(s) {
+  const t = String(s ?? '').trim().replace(/[年月]/g, '/').replace(/日$/, '').replace(/\./g, '/');
+  if (!t) return null;
+  const m = /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/.exec(t); if (!m) return null;
+  return parseISO(`${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`);
+}
+const CSV_EMP_HEAD = ['社員No', '氏名', '比例区分', '入社年月日', '入社時付与日数', '有給残登録日付', '登録日付有給残', '有給残の内前年繰越日数', '出勤率8割未満付与日'];
+const CSV_USE_HEAD = ['社員No', '氏名', '取得日', '日数'];
+function exportEmployeesCSV() {
+  const rows = [CSV_EMP_HEAD];
+  for (const e of state.employees) {
+    rows.push([e.no, e.name, e.propDiv > 0 ? e.propDiv : '', csvDate(e.joined), e.grantAtJoin || '', csvDate(e.regDate), e.regLeft === '' ? '' : e.regLeft, e.regLastYearLeft === '' ? '' : e.regLastYearLeft, Object.keys(e.lessThan80 || {}).sort().map(csvDate).join(';')]);
+  }
+  downloadText(`社員情報_${stamp()}.csv`, toCSV(rows));
+}
+function exportUsageCSV() {
+  const rows = [CSV_USE_HEAD];
+  for (const e of state.employees) {
+    for (const k of Object.keys(e.usage || {}).sort()) { const v = e.usage[k]; if (v === '' || v == null) continue; rows.push([e.no, e.name, csvDate(k), v]); }
+  }
+  downloadText(`有給取得日_${stamp()}.csv`, toCSV(rows));
+}
+function openCsvExport() {
+  const w = openModal({ title: 'CSV出力', cls: 'w-sm', body: `<div class="form">
+    <div class="frow"><button type="button" class="btn primary" id="csvExpEmp">社員情報CSV</button><span class="note">${state.employees.length}人</span></div>
+    <div class="frow"><button type="button" class="btn primary" id="csvExpUse">有給取得日CSV</button><span class="note">${state.employees.reduce((a, e) => a + Object.keys(e.usage || {}).length, 0)}件</span></div>
+    <div class="note">UTF-8（BOM付き）・Excelでそのまま開けます</div></div>` });
+  $('#csvExpEmp', w).addEventListener('click', () => { exportEmployeesCSV(); });
+  $('#csvExpUse', w).addEventListener('click', () => { exportUsageCSV(); });
+}
+function normHead(h) { return String(h ?? '').replace(/^﻿/, '').replace(/[\s※　]/g, '').toLowerCase(); }
+const HEAD_ALIAS = {
+  no: ['社員no', '社員番号', 'no', '社員ｎｏ'], name: ['氏名', '名前', '社員名'], pd: ['比例区分', '区分'], joined: ['入社年月日', '入社日'],
+  grant: ['入社時付与日数', '入社時付与', '入社時付与日'], regDate: ['有給残登録日付', '登録日付', '有給残登録日'], regLeft: ['登録日付有給残', '有給残日数', '有給残'],
+  regLY: ['有給残の内前年繰越日数', '有給残のうち前年繰越日数', '前年繰越日数', 'うち前年繰越'], lt80: ['出勤率8割未満付与日', '出勤率8割未満', '8割未満付与日'],
+  date: ['取得日', '日付', '有給取得日'], val: ['日数', '取得日数', '値'],
+};
+function mapHeader(hdr) {
+  const idx = {}; hdr.forEach((h, i) => { const n = normHead(h); for (const k in HEAD_ALIAS) if (idx[k] == null && HEAD_ALIAS[k].includes(n)) idx[k] = i; });
+  return idx;
+}
+function analyzeCSV(text) {
+  const rows = parseCSV(text); if (rows.length < 1) return { error: 'データがありません。' };
+  const idx = mapHeader(rows[0]); const body = rows.slice(1);
+  const get = (r, k) => idx[k] == null ? '' : String(r[idx[k]] ?? '').trim();
+  const res = { errors: [], items: [] };
+  if (idx.date != null && idx.no != null) {
+    res.kind = 'usage';
+    body.forEach((r, i) => {
+      const line = i + 2, no = pad8(get(r, 'no')), d = parseAnyDate(get(r, 'date')), vs = get(r, 'val').replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+      if (!no) { res.errors.push(`${line}行目：社員Noがありません`); return; }
+      const emp = state.employees.find(e => pad8(e.no) === no);
+      if (!emp) { res.errors.push(`${line}行目：社員No ${no} は未登録です`); return; }
+      if (!d) { res.errors.push(`${line}行目：取得日が日付ではありません（${get(r, 'date')}）`); return; }
+      let v = vs === '' ? 0 : Number(vs);
+      if (!(v === 0 || v === 1 || v === 0.5)) { res.errors.push(`${line}行目：日数は 1／0.5／0 で入力してください（${vs}）`); return; }
+      res.items.push({ emp, key: iso(d), v });
+    });
+    res.add = res.items.filter(x => x.v && x.emp.usage[x.key] == null).length;
+    res.upd = res.items.filter(x => x.v && x.emp.usage[x.key] != null).length;
+    res.del = res.items.filter(x => !x.v && x.emp.usage[x.key] != null).length;
+    return res;
+  }
+  if (idx.no != null && idx.name != null && idx.joined != null) {
+    res.kind = 'employees';
+    const seen = new Set();
+    body.forEach((r, i) => {
+      const line = i + 2, noRaw = get(r, 'no').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)), name = get(r, 'name');
+      if (!/^\d{1,8}$/.test(noRaw)) { res.errors.push(`${line}行目：社員Noは8桁以内の数値で入力してください（${noRaw}）`); return; }
+      const no = pad8(noRaw);
+      if (seen.has(no)) { res.errors.push(`${line}行目：社員No ${no} がCSV内で重複しています`); return; } seen.add(no);
+      if (!name) { res.errors.push(`${line}行目：氏名がありません`); return; }
+      const jd = parseAnyDate(get(r, 'joined'));
+      if (!jd || jd < mkDate(1910, 1, 1) || jd > mkDate(9999, 6, 1)) { res.errors.push(`${line}行目：入社年月日が日付ではありません（${get(r, 'joined')}）`); return; }
+      const pdS = get(r, 'pd').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+      const pd = (pdS === '' || pdS === '一般' || pdS === '0') ? 0 : Number(pdS);
+      if (![0, 1, 2, 3, 4].includes(pd)) { res.errors.push(`${line}行目：比例区分は空欄（一般）または1～4で入力してください（${pdS}）`); return; }
+      const grantS = get(r, 'grant'); const grant = grantS === '' ? 0 : Math.floor(Number(grantS));
+      if (isNaN(grant) || grant < 0 || grant > 40) { res.errors.push(`${line}行目：入社時付与日数が不正です（${grantS}）`); return; }
+      const regDateS = get(r, 'regDate'), regLeftS = get(r, 'regLeft'), regLYS = get(r, 'regLY');
+      let regDate = '', regLeft = '', regLY = '';
+      if (regDateS || regLeftS || regLYS) {
+        const rd = parseAnyDate(regDateS);
+        if (!rd) { res.errors.push(`${line}行目：有給残登録日付が日付ではありません（${regDateS}）`); return; }
+        if (regLeftS === '' || isNaN(Number(regLeftS))) { res.errors.push(`${line}行目：登録日付有給残を入力してください`); return; }
+        regDate = iso(rd); regLeft = Number(regLeftS); regLY = regLYS === '' ? 0 : Number(regLYS);
+        if (isNaN(regLY) || regLY < 0 || regLY > 20) { res.errors.push(`${line}行目：前年繰越日数が不正です（${regLYS}）`); return; }
+        if (regLeft > 40) { res.errors.push(`${line}行目：有給残は最大40です（${regLeftS}）`); return; }
+        if (regLY > regLeft) { res.errors.push(`${line}行目：前年繰越日数は有給残以下にしてください`); return; }
+      }
+      const lt80 = {}; const badLt = [];
+      get(r, 'lt80').split(/[;；、,\/ ]+(?=\d{4})|[;；]/).map(s => s.trim()).filter(Boolean).forEach(s => { const d = parseAnyDate(s); if (d) lt80[iso(d)] = 1; else badLt.push(s); });
+      if (badLt.length) { res.errors.push(`${line}行目：出勤率8割未満付与日が日付ではありません（${badLt.join(' ')}）`); return; }
+      const existing = state.employees.find(e => pad8(e.no) === no);
+      res.items.push({ existing, vals: { no: String(Number(noRaw)), name, propDiv: pd, joined: iso(jd), grantAtJoin: grant, regDate, regLeft, regLastYearLeft: regLY, lessThan80: lt80 } });
+    });
+    res.add = res.items.filter(x => !x.existing).length; res.upd = res.items.filter(x => x.existing).length;
+    return res;
+  }
+  return { error: '取り込めるCSVではありません。\n（社員情報CSV：社員No・氏名・入社年月日、有給取得日CSV：社員No・取得日・日数 の列が必要です）' };
+}
+function applyCSV(res) {
+  if (res.kind === 'usage') {
+    for (const it of res.items) { if (it.v) it.emp.usage[it.key] = it.v; else delete it.emp.usage[it.key]; }
+  } else {
+    let id = nextId();
+    for (const it of res.items) {
+      if (it.existing) Object.assign(it.existing, it.vals);
+      else state.employees.push(Object.assign({ id: id++, division: '', section: '', usage: {} }, it.vals));
+    }
+  }
+  save(); calMonth = null; render();
+}
+function openCsvImport() {
+  const w = openModal({ title: 'CSV取込', cls: 'w-md', body: `<div class="form">
+    <div class="frow"><label>CSVファイル</label><input type="file" id="csvFile" accept=".csv,text/csv"></div>
+    <div id="csvInfo" class="restore-info"></div>
+    <div class="btns right"><button type="button" class="btn primary" id="csvExe" disabled>取込実行</button><button type="button" class="btn" id="csvCancel">キャンセル</button></div></div>` });
+  let result = null;
+  $('#csvFile', w).addEventListener('change', ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      result = analyzeCSV(decodeCSV(rd.result));
+      const info = $('#csvInfo', w);
+      if (result.error) { info.innerHTML = `<div class="err">${esc(result.error).replace(/\n/g, '<br>')}</div>`; $('#csvExe', w).disabled = true; result = null; return; }
+      const kindLabel = result.kind === 'usage' ? '有給取得日' : '社員情報';
+      const counts = result.kind === 'usage' ? `追加 ${result.add}件・上書き ${result.upd}件・削除 ${result.del}件` : `新規 ${result.add}人・更新 ${result.upd}人`;
+      let h = `<table class="kvtable"><tr><th>種別</th><td>${kindLabel}CSV</td></tr><tr><th>ファイル名</th><td>${esc(f.name)}</td></tr><tr><th>取込内容</th><td>${counts}</td></tr><tr><th>エラー</th><td>${result.errors.length}行</td></tr></table>`;
+      if (result.errors.length) h += `<div class="err csv-errors">${result.errors.slice(0, 20).map(esc).join('<br>')}${result.errors.length > 20 ? '<br>…' : ''}<br><span class="note">エラー行は取り込まれません</span></div>`;
+      info.innerHTML = h;
+      $('#csvExe', w).disabled = result.items.length === 0;
+    };
+    rd.readAsArrayBuffer(f);
+  });
+  $('#csvCancel', w).addEventListener('click', () => w.close());
+  $('#csvExe', w).addEventListener('click', async () => {
+    if (!result) return;
+    const q = result.kind === 'usage' ? '有給取得日を取り込みます。同じ日付の入力は上書きされます。\nよろしいですか？' : '社員情報を取り込みます。社員Noが同じ社員は上書き更新されます。\nよろしいですか？';
+    if (!(await askYesNo(q, '取込確認'))) return;
+    applyCSV(result); w.remove();
+    await msgBox('取込が完了しました。', '取込完了');
+  });
+}
+
+// ---------- 起動 ----------
+state = loadState();
+if (!state.settings.company && !state.employees.length) { /* 未設定 */ }
+render();
+
+</script>
+</body>
+</html>
